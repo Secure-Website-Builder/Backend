@@ -146,6 +146,7 @@ CREATE TABLE customer_order (
   order_id        BIGSERIAL PRIMARY KEY,
   store_id        BIGINT NOT NULL REFERENCES store(store_id),
   customer_id     BIGINT REFERENCES customer(customer_id),
+  session_id      UUID NOT NULL REFERENCES visitor_session(session_id),
   total_amount    DECIMAL(10,2),
   status          VARCHAR(50) DEFAULT 'pending',
   created_at      TIMESTAMP DEFAULT NOW(),
@@ -180,3 +181,32 @@ CREATE TABLE shipment (
   delivered_at    TIMESTAMP CHECK (delivered_at >= shipped_at),
   status          VARCHAR(50) DEFAULT 'pending'
 );
+
+CREATE TABLE visitor_session (
+  session_id     UUID PRIMARY KEY,
+  store_id       BIGINT NOT NULL REFERENCES store(store_id),
+  customer_id    BIGINT REFERENCES customer(customer_id), -- nullable for guests
+  ip_address     INET,
+  user_agent     TEXT,
+  first_seen_at  TIMESTAMP DEFAULT NOW(),
+  last_seen_at   TIMESTAMP DEFAULT NOW(),
+  is_returning   BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE product_view (
+  product_view_id BIGSERIAL PRIMARY KEY,
+  product_id      BIGINT NOT NULL REFERENCES product(product_id),
+  store_id        BIGINT NOT NULL REFERENCES store(store_id),
+  session_id      UUID NOT NULL REFERENCES visitor_session(session_id),
+  viewed_at       TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE cart_event (
+  cart_event_id BIGSERIAL PRIMARY KEY,
+  session_id    UUID NOT NULL REFERENCES visitor_session(session_id),
+  product_id    BIGINT NOT NULL REFERENCES product(product_id),
+  variant_id    BIGINT REFERENCES product_variant(variant_id),
+  event_type    VARCHAR(20) CHECK (event_type IN ('add', 'remove')),
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
