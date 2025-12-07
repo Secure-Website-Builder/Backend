@@ -100,7 +100,7 @@ type Payment struct {
 type Product struct {
 	ProductID        int64
 	StoreID          int64
-	CategoryID       sql.NullInt64
+	CategoryID       int64
 	Name             string
 	Slug             sql.NullString
 	Description      sql.NullString

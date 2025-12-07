@@ -57,3 +57,28 @@ FROM variant_option vo
 JOIN option_value ov ON vo.option_value_id = ov.option_value_id
 JOIN option_type ot ON ov.option_type_id = ot.option_type_id
 WHERE vo.variant_id = $1;
+
+-- name: GetTopProductsByCategory :many
+SELECT 
+  p.product_id,
+  p.store_id,
+  p.name,
+  p.slug,
+  p.description,
+  p.brand,
+  p.category_id,
+  p.default_variant_id,
+  p.in_stock,
+  img.image_url AS primary_image
+FROM product p
+LEFT JOIN product_image img 
+  ON img.product_id = p.product_id AND img.is_primary = true
+JOIN product_variant v 
+  ON v.variant_id = p.default_variant_id
+WHERE 
+  p.store_id = $1 
+  AND p.category_id = $2
+  AND p.deleted_at IS NULL
+ORDER BY 
+  v.stock_quantity DESC
+LIMIT $3;

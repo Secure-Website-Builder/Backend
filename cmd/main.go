@@ -47,7 +47,8 @@ func main() {
 	
 	productService := product.New(queries)
 	productHandler := handlers.NewProductHandler(productService)
+	categoryProductHandler := handlers.NewCategoryProductHandler(productService)
 
-	r := router.SetupRouter(categoryHandler,productHandler)
+	r := router.SetupRouter(categoryHandler,productHandler,categoryProductHandler)
 	r.Run(":8080")
 }

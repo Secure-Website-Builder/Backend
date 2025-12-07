@@ -9,7 +9,7 @@ type ProductDTO struct {
 	Slug             sql.NullString   `json:"slug"`
 	Description      sql.NullString   `json:"description"`
 	Brand            sql.NullString   `json:"brand"`
-	CategoryID       sql.NullInt64    `json:"category_id"`
+	CategoryID       int64    				`json:"category_id"`
 	InStock          bool             `json:"in_stock"`
 	PrimaryImage     sql.NullString   `json:"primary_image"`
 	Attributes       []AttributeDTO   `json:"attributes"`

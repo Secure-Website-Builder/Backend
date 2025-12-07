@@ -93,7 +93,7 @@ type GetProductBaseRow struct {
 	Slug             sql.NullString
 	Description      sql.NullString
 	Brand            sql.NullString
-	CategoryID       sql.NullInt64
+	CategoryID       int64
 	DefaultVariantID sql.NullInt64
 	InStock          bool
 	PrimaryImage     sql.NullString
@@ -154,6 +154,85 @@ func (q *Queries) GetProductVariants(ctx context.Context, productID int64) ([]Ge
 			&i.Price,
 			&i.StockQuantity,
 			&i.ImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTopProductsByCategory = `-- name: GetTopProductsByCategory :many
+SELECT 
+  p.product_id,
+  p.store_id,
+  p.name,
+  p.slug,
+  p.description,
+  p.brand,
+  p.category_id,
+  p.default_variant_id,
+  p.in_stock,
+  img.image_url AS primary_image
+FROM product p
+LEFT JOIN product_image img 
+  ON img.product_id = p.product_id AND img.is_primary = true
+JOIN product_variant v 
+  ON v.variant_id = p.default_variant_id
+WHERE 
+  p.store_id = $1 
+  AND p.category_id = $2
+  AND p.deleted_at IS NULL
+ORDER BY 
+  v.stock_quantity DESC
+LIMIT $3
+`
+
+type GetTopProductsByCategoryParams struct {
+	StoreID    int64
+	CategoryID int64
+	Limit      int32
+}
+
+type GetTopProductsByCategoryRow struct {
+	ProductID        int64
+	StoreID          int64
+	Name             string
+	Slug             sql.NullString
+	Description      sql.NullString
+	Brand            sql.NullString
+	CategoryID       int64
+	DefaultVariantID sql.NullInt64
+	InStock          bool
+	PrimaryImage     sql.NullString
+}
+
+func (q *Queries) GetTopProductsByCategory(ctx context.Context, arg GetTopProductsByCategoryParams) ([]GetTopProductsByCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopProductsByCategory, arg.StoreID, arg.CategoryID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopProductsByCategoryRow
+	for rows.Next() {
+		var i GetTopProductsByCategoryRow
+		if err := rows.Scan(
+			&i.ProductID,
+			&i.StoreID,
+			&i.Name,
+			&i.Slug,
+			&i.Description,
+			&i.Brand,
+			&i.CategoryID,
+			&i.DefaultVariantID,
+			&i.InStock,
+			&i.PrimaryImage,
 		); err != nil {
 			return nil, err
 		}

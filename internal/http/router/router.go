@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(categoryHandler *handlers.CategoryHandler, productHandler *handlers.ProductHandler) *gin.Engine {
+func SetupRouter(categoryHandler *handlers.CategoryHandler, productHandler *handlers.ProductHandler, categoryProductHandler *handlers.CategoryProductHandler) *gin.Engine {
 	r := gin.Default()
 
 	stores := r.Group("/stores/:store_id")
@@ -16,6 +16,11 @@ func SetupRouter(categoryHandler *handlers.CategoryHandler, productHandler *hand
 	productGroup := r.Group("/stores/:store_id/products")
 	{
 		productGroup.GET("/:product_id", productHandler.GetProduct)
+	}
+
+	categoryGroup := r.Group("/stores/:store_id/categories")
+	{
+		categoryGroup.GET("/:id/top-products", categoryProductHandler.GetTopProducts)
 	}
 
 	return r
