@@ -44,18 +44,17 @@ CREATE TABLE product (
   brand           VARCHAR(255),
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW(),
-  in_stock        BOOLEAN DEFAULT TRUE,
+  in_stock        BOOLEAN DEFAULT TRUE NOT NULL,
   deleted_at      TIMESTAMP NULL,
-  default_variant_id BIGINT NOT NULL REFERENCES product_variant(variant_id),
+  default_variant_id BIGINT REFERENCES product_variant(variant_id),
   CONSTRAINT unique_slug_per_store UNIQUE (store_id, slug)
 );
 
 CREATE TABLE product_image (
   image_id        BIGSERIAL PRIMARY KEY,
-  store_id        BIGINT NOT NULL REFERENCES store(store_id),
   product_id      BIGINT NOT NULL REFERENCES product(product_id),
   image_url       VARCHAR(500) NOT NULL,
-  is_primary      BOOLEAN DEFAULT FALSE
+  is_primary      BOOLEAN DEFAULT FALSE NOT NULL
 );
 
 CREATE TABLE attribute_definition (
@@ -64,7 +63,7 @@ CREATE TABLE attribute_definition (
   name            VARCHAR(100) NOT NULL,
   data_type       VARCHAR(50) NOT NULL CHECK (data_type IN ('string', 'integer', 'decimal', 'boolean')),
   category_id     BIGINT REFERENCES product_category(category_id),
-  UNIQUE(store_id, name)
+  UNIQUE(category_id, name)
 );
 
 CREATE TABLE product_attribute_value (
@@ -91,10 +90,10 @@ CREATE TABLE option_value (
 CREATE TABLE product_variant (
   variant_id      BIGSERIAL PRIMARY KEY,
   product_id      BIGINT NOT NULL REFERENCES product(product_id),
-  sku             VARCHAR(100),
-  price           DECIMAL(10,2),
-  stock_quantity  INT DEFAULT 0,
-  image_url       VARCHAR(500),
+  sku             VARCHAR(100) NOT NULL,
+  price           DECIMAL(10,2) NOT NULL,
+  stock_quantity  INT DEFAULT 0 NOT NULL,
+  image_url       VARCHAR(500) NOT NULL,
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW(),
   deleted_at      TIMESTAMP NULL,
