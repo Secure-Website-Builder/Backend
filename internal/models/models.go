@@ -7,6 +7,7 @@ package models
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -24,6 +25,15 @@ type Cart struct {
 	StoreID    int64
 	CreatedAt  sql.NullTime
 	UpdatedAt  sql.NullTime
+}
+
+type CartEvent struct {
+	CartEventID int64
+	SessionID   uuid.UUID
+	ProductID   int64
+	VariantID   sql.NullInt64
+	EventType   sql.NullString
+	CreatedAt   sql.NullTime
 }
 
 type CartItem struct {
@@ -49,6 +59,7 @@ type CustomerOrder struct {
 	OrderID     int64
 	StoreID     int64
 	CustomerID  sql.NullInt64
+	SessionID   uuid.UUID
 	TotalAmount sql.NullString
 	Status      sql.NullString
 	CreatedAt   sql.NullTime
@@ -136,6 +147,14 @@ type ProductVariant struct {
 	DeletedAt     sql.NullTime
 }
 
+type ProductView struct {
+	ProductViewID int64
+	ProductID     int64
+	StoreID       int64
+	SessionID     uuid.UUID
+	ViewedAt      sql.NullTime
+}
+
 type Shipment struct {
 	ShipmentID     int64
 	OrderID        int64
@@ -168,4 +187,15 @@ type StoreOwner struct {
 type VariantOption struct {
 	VariantID     int64
 	OptionValueID int64
+}
+
+type VisitorSession struct {
+	SessionID   uuid.UUID
+	StoreID     int64
+	CustomerID  sql.NullInt64
+	IpAddress   pqtype.Inet
+	UserAgent   sql.NullString
+	FirstSeenAt sql.NullTime
+	LastSeenAt  sql.NullTime
+	IsReturning sql.NullBool
 }
