@@ -61,7 +61,7 @@ CREATE TABLE attribute_definition (
 );
 
 CREATE TABLE product_attribute_value (
-  product_id      BIGINT NOT NULL REFERENCES product(product_id),
+  product_id      BIGINT NOT NULL REFERENCES product(product_id) ON DELETE CASCADE,
   attribute_id    BIGINT NOT NULL REFERENCES attribute_definition(attribute_id),
   value_text      TEXT,
   value_number    DECIMAL(15,4),
@@ -97,13 +97,13 @@ CREATE TABLE product_variant (
 
 CREATE TABLE product_variant_image (
   image_id        BIGSERIAL PRIMARY KEY,
-  product_variant_id      BIGINT NOT NULL REFERENCES product_variant(variant_id),
+  product_variant_id      BIGINT NOT NULL REFERENCES product_variant(variant_id) ON DELETE CASCADE,
   image_url       VARCHAR(500) NOT NULL,
   created_at      TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE variant_option (
-  variant_id      BIGINT NOT NULL REFERENCES product_variant(variant_id),
+  variant_id      BIGINT NOT NULL REFERENCES product_variant(variant_id) ON DELETE CASCADE,
   option_value_id BIGINT NOT NULL REFERENCES option_value(option_value_id),
   PRIMARY KEY (variant_id, option_value_id)
 );
