@@ -50,12 +50,6 @@ CREATE TABLE product (
   CONSTRAINT unique_slug_per_store UNIQUE (store_id, slug)
 );
 
-CREATE TABLE product_image (
-  image_id        BIGSERIAL PRIMARY KEY,
-  product_id      BIGINT NOT NULL REFERENCES product(product_id),
-  image_url       VARCHAR(500) NOT NULL,
-  is_primary      BOOLEAN DEFAULT FALSE NOT NULL
-);
 
 CREATE TABLE attribute_definition (
   attribute_id    BIGSERIAL PRIMARY KEY,
@@ -90,14 +84,22 @@ CREATE TABLE option_value (
 CREATE TABLE product_variant (
   variant_id      BIGSERIAL PRIMARY KEY,
   product_id      BIGINT NOT NULL REFERENCES product(product_id),
+  store_id        BIGINT NOT NULL REFERENCES store(store_id),
   sku             VARCHAR(100) NOT NULL,
   price           DECIMAL(10,2) NOT NULL,
   stock_quantity  INT DEFAULT 0 NOT NULL,
-  image_url       VARCHAR(500) NOT NULL,
+  primary_image_url  VARCHAR(500) NOT NULL,
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW(),
   deleted_at      TIMESTAMP NULL,
   UNIQUE (store_id, sku)
+);
+
+CREATE TABLE product_variant_image (
+  image_id        BIGSERIAL PRIMARY KEY,
+  product_variant_id      BIGINT NOT NULL REFERENCES product_variant(variant_id),
+  image_url       VARCHAR(500) NOT NULL,
+  created_at      TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE variant_option (
