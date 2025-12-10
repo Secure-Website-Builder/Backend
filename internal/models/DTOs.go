@@ -2,7 +2,7 @@ package models
 
 import "database/sql"
 
-type ProductDTO struct {
+type ProductFullDetailsDTO struct {
 	ProductID        int64            `json:"product_id"`
 	StoreID          int64            `json:"store_id"`
 	Name             string           `json:"name"`
@@ -10,8 +10,9 @@ type ProductDTO struct {
 	Description      sql.NullString   `json:"description"`
 	Brand            sql.NullString   `json:"brand"`
 	CategoryID       int64    				`json:"category_id"`
+	Price            string						`json:"price"`
 	InStock          bool             `json:"in_stock"`
-	PrimaryImage     sql.NullString   `json:"primary_image"`
+	PrimaryImage     string   				`json:"primary_image"`
 	Attributes       []AttributeDTO   `json:"attributes"`
 	Variants         []VariantDTO     `json:"variants"`
 	DefaultVariantID sql.NullInt64    `json:"default_variant_id"`
