@@ -18,6 +18,16 @@ type ProductFullDetailsDTO struct {
 	DefaultVariantID sql.NullInt64    `json:"default_variant_id"`
 }
 
+type ProductDTO struct {
+	ProductID int64  					`json:"product_id"`
+	Name      string  				`json:"name"`
+	Slug      sql.NullString 	`json:"slug"`
+	Brand     sql.NullString 	`json:"brand"`
+	Price     string 					`json:"price"`
+	ImageURL  string 					`json:"image_url"`
+	InStock   bool    				`json:"in_stock"`
+}
+
 type AttributeDTO struct {
 	AttributeID int64   `json:"attribute_id"`
 	Name        string  `json:"name"`
