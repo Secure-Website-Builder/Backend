@@ -14,9 +14,9 @@ func New(q *models.Queries) *Service {
 	return &Service{q: q}
 }
 
-func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) (*models.ProductDTO, error) {
+func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) (*models.ProductFullDetailsDTO, error) {
 
-	// 1️⃣ Base Product
+	//  Base Product
 	p, err := s.q.GetProductBase(ctx, models.GetProductBaseParams{
 		StoreID:  storeID,
 		ProductID: productID,
@@ -25,7 +25,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 		return nil, err
 	}
 
-	// 2️⃣ Attributes
+	//  Attributes
 	attrsRaw, _ := s.q.GetProductAttributes(ctx, productID)
 	attrs := make([]models.AttributeDTO, 0)
 
@@ -48,7 +48,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 		})
 	}
 
-	// 3️⃣ Variants
+	//  Variants
 	variantsRaw, _ := s.q.GetProductVariants(ctx, productID)
 	variants := make([]models.VariantDTO, 0)
 
@@ -69,12 +69,12 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 			SKU:           v.Sku,
 			Price:         v.Price,
 			StockQuantity: v.StockQuantity,
-			ImageURL:      v.ImageUrl,
+			ImageURL:      v.PrimaryImageUrl,
 			Options:       opts,
 		})
 	}
 
-	return &models.ProductDTO{
+	return &models.ProductFullDetailsDTO{
 		ProductID:        p.ProductID,
 		StoreID:          p.StoreID,
 		Name:             p.Name,
@@ -83,6 +83,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 		Brand:            p.Brand,
 		CategoryID:       p.CategoryID,
 		InStock:          p.InStock,
+		Price:            p.Price,
 		PrimaryImage:     p.PrimaryImage,
 		Attributes:       attrs,
 		Variants:         variants,
