@@ -31,7 +31,6 @@ type ProductDTO struct {
 type AttributeDTO struct {
 	AttributeID int64   `json:"attribute_id"`
 	Name        string  `json:"name"`
-	DataType    string  `json:"data_type"`
 	Value       any     `json:"value"`
 }
 
