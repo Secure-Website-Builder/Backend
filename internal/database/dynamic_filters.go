@@ -10,7 +10,7 @@ import (
 // AttributeFilter: attribute_id and desired value
 type AttributeFilter struct {
 	AttributeID int64
-	Values       []string
+	Values      []string
 }
 
 // BuildAttributeFilterSQL builds multi-JOINs for each attribute filter

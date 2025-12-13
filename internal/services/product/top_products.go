@@ -25,13 +25,13 @@ func (s *Service) GetTopProductsByCategory(
 
 	for _, p := range rows {
 		products = append(products, models.ProductDTO{
-			ProductID:        p.ProductID,
-			Name:             p.Name,
-			Slug:             p.Slug,
-			Brand:            p.Brand,
-			Price:       			p.Price,
-			ImageURL:     		p.PrimaryImage,
-			InStock:          p.InStock,
+			ProductID: p.ProductID,
+			Name:      p.Name,
+			Slug:      p.Slug,
+			Brand:     p.Brand,
+			Price:     p.Price,
+			ImageURL:  p.PrimaryImage,
+			InStock:   p.InStock,
 		})
 	}
 

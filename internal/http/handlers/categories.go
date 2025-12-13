@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/Secure-Website-Builder/Backend/internal/services/category"
+	"github.com/gin-gonic/gin"
 )
 
 type CategoryHandler struct {

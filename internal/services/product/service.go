@@ -25,7 +25,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 
 	//  Base Product
 	p, err := s.q.GetProductBase(ctx, models.GetProductBaseParams{
-		StoreID:  storeID,
+		StoreID:   storeID,
 		ProductID: productID,
 	})
 	if err != nil {
@@ -113,7 +113,7 @@ func readListProductsTemplate() (string, error) {
 func (s *Service) ResolveAttributeNameToID(ctx context.Context, storeID int64, name string) (int64, error) {
 	// The sqlc function generated from queries.sql is called ResolveAttributeIDByName
 	// (ensure names match your sqlc config; adjust name if sqlc generated a different function).
-	id, err := s.q.ResolveAttributeIDByName(ctx, models.ResolveAttributeIDByNameParams{StoreID:storeID, Name:name})
+	id, err := s.q.ResolveAttributeIDByName(ctx, models.ResolveAttributeIDByNameParams{StoreID: storeID, Name: name})
 	if err != nil {
 		return 0, err
 	}
