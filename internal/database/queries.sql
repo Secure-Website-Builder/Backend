@@ -27,10 +27,7 @@ WHERE p.store_id = $1 AND p.product_id = $2 AND p.deleted_at IS NULL;
 SELECT
   ad.attribute_id,
   ad.name,
-  ad.data_type,
-  pav.value_text,
-  pav.value_number,
-  pav.value_boolean
+  pav.value
 FROM product_attribute_value pav
 JOIN attribute_definition ad 
   ON pav.attribute_id = ad.attribute_id
@@ -82,3 +79,9 @@ WHERE
 ORDER BY 
   v.stock_quantity DESC
 LIMIT $3;
+
+-- name: ResolveAttributeIDByName :one
+SELECT attribute_id
+FROM attribute_definition
+WHERE store_id = $1 AND name = $2
+LIMIT 1;
