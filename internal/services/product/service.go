@@ -95,13 +95,13 @@ type ListProductFilters struct {
 	MinPrice   *float64
 	MaxPrice   *float64
 	Brand      *string
-	Attributes []database.AttributeFilter // resolved attribute_id + value
+	Attributes []database.AttributeFilter
 }
 
 // readTemplate reads the template file once
 func readListProductsTemplate() (string, error) {
 	// read the dedicated template file
-	b, err := os.ReadFile("internal/database/list_products_template.sql")
+	b, err := os.ReadFile("./internal/database/list_products_template.sql")
 	if err != nil {
 		return "", err
 	}
