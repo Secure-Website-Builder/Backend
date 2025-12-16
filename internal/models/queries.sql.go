@@ -8,7 +8,99 @@ package models
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const getCartBySession = `-- name: GetCartBySession :one
+SELECT c.cart_id, c.store_id, c.updated_at
+FROM cart c
+JOIN visitor_session s ON s.customer_id = c.customer_id
+WHERE s.session_id = $1
+  AND c.store_id = $2
+LIMIT 1
+`
+
+type GetCartBySessionParams struct {
+	SessionID uuid.UUID
+	StoreID   int64
+}
+
+type GetCartBySessionRow struct {
+	CartID    int64
+	StoreID   int64
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) GetCartBySession(ctx context.Context, arg GetCartBySessionParams) (GetCartBySessionRow, error) {
+	row := q.db.QueryRowContext(ctx, getCartBySession, arg.SessionID, arg.StoreID)
+	var i GetCartBySessionRow
+	err := row.Scan(&i.CartID, &i.StoreID, &i.UpdatedAt)
+	return i, err
+}
+
+const getCartItems = `-- name: GetCartItems :many
+SELECT
+	ci.cart_item_id,
+	ci.variant_id,
+	p.product_id,
+	p.name AS product_name,
+	v.sku,
+	v.primary_image_url,
+	ci.unit_price,
+	ci.quantity,
+	(ci.unit_price * ci.quantity)::NUMERIC AS subtotal
+FROM cart_item ci
+JOIN product_variant v ON v.variant_id = ci.variant_id
+JOIN product p ON p.product_id = v.product_id
+WHERE ci.cart_id = $1
+ORDER BY ci.created_at
+`
+
+type GetCartItemsRow struct {
+	CartItemID      int64
+	VariantID       int64
+	ProductID       int64
+	ProductName     string
+	Sku             string
+	PrimaryImageUrl string
+	UnitPrice       string
+	Quantity        int32
+	Subtotal        string
+}
+
+func (q *Queries) GetCartItems(ctx context.Context, cartID int64) ([]GetCartItemsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCartItems, cartID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCartItemsRow
+	for rows.Next() {
+		var i GetCartItemsRow
+		if err := rows.Scan(
+			&i.CartItemID,
+			&i.VariantID,
+			&i.ProductID,
+			&i.ProductName,
+			&i.Sku,
+			&i.PrimaryImageUrl,
+			&i.UnitPrice,
+			&i.Quantity,
+			&i.Subtotal,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const getProductAttributes = `-- name: GetProductAttributes :many
 SELECT

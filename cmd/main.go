@@ -12,6 +12,7 @@ import (
 	"github.com/Secure-Website-Builder/Backend/internal/http/handlers"
 	"github.com/Secure-Website-Builder/Backend/internal/http/router"
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/Secure-Website-Builder/Backend/internal/services/cart"
 	"github.com/Secure-Website-Builder/Backend/internal/services/category"
 	"github.com/Secure-Website-Builder/Backend/internal/services/product"
 )
@@ -46,14 +47,16 @@ func main() {
 	// services
 	categoryService := category.NewService(queries)
 	productService := product.New(queries, db)
-
+	cartService := cart.New(queries)
+	
 	// handlers
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	productHandler := handlers.NewProductHandler(productService)
 	categoryProductHandler := handlers.NewCategoryProductHandler(productService)
-
+	cartHandler := handlers.NewCartHandler(cartService)
+	
 	// router
-	r := router.SetupRouter(categoryHandler, productHandler, categoryProductHandler)
+	r := router.SetupRouter(categoryHandler, productHandler, categoryProductHandler, cartHandler)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {

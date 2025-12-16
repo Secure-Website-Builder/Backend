@@ -91,3 +91,28 @@ SELECT category_id
 FROM product_category
 WHERE store_id = $1 AND name = $2
 LIMIT 1;
+
+-- name: GetCartBySession :one
+SELECT c.cart_id, c.store_id, c.updated_at
+FROM cart c
+JOIN visitor_session s ON s.customer_id = c.customer_id
+WHERE s.session_id = $1
+  AND c.store_id = $2
+LIMIT 1;
+
+-- name: GetCartItems :many
+SELECT
+	ci.cart_item_id,
+	ci.variant_id,
+	p.product_id,
+	p.name AS product_name,
+	v.sku,
+	v.primary_image_url,
+	ci.unit_price,
+	ci.quantity,
+	(ci.unit_price * ci.quantity)::NUMERIC AS subtotal
+FROM cart_item ci
+JOIN product_variant v ON v.variant_id = ci.variant_id
+JOIN product p ON p.product_id = v.product_id
+WHERE ci.cart_id = $1
+ORDER BY ci.created_at;

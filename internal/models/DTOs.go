@@ -1,6 +1,8 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type ProductFullDetailsDTO struct {
 	ProductID        int64          `json:"product_id"`
@@ -46,4 +48,24 @@ type VariantDTO struct {
 type VariantOptionDTO struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
+}
+
+type CartItemDTO struct {
+	CartItemID int64   `json:"cart_item_id"`
+	VariantID  int64   `json:"variant_id"`
+	ProductID  int64   `json:"product_id"`
+	Product    string  `json:"product_name"`
+	SKU        string  `json:"sku"`
+	ImageURL   string  `json:"image_url"`
+	Price      string  `json:"price"`
+	Quantity   int32   `json:"quantity"`
+	Subtotal   string  `json:"subtotal"`
+}
+
+type CartDTO struct {
+	CartID    int64         `json:"cart_id"`
+	StoreID   int64         `json:"store_id"`
+	Items     []CartItemDTO `json:"items"`
+	Total     float64       `json:"total"`
+	UpdatedAt sql.NullTime  `json:"updated_at"`
 }
