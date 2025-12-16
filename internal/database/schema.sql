@@ -153,7 +153,7 @@ CREATE TABLE cart_item (
   cart_id         BIGINT NOT NULL REFERENCES cart(cart_id),
   variant_id      BIGINT NOT NULL REFERENCES product_variant(variant_id),
   quantity        INT NOT NULL CHECK (quantity > 0),
-  unit_price      DECIMAL(10,2),
+  unit_price      DECIMAL(10,2) NOT NULL,
   created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

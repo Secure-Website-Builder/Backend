@@ -40,7 +40,7 @@ type CartItem struct {
 	CartID     int64
 	VariantID  int64
 	Quantity   int32
-	UnitPrice  sql.NullString
+	UnitPrice  string
 	CreatedAt  sql.NullTime
 }
 
