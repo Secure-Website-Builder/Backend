@@ -7,17 +7,18 @@ import (
 type ProductFullDetailsDTO struct {
 	ProductID        int64          `json:"product_id"`
 	StoreID          int64          `json:"store_id"`
-	Name             string         `json:"name"`
+	ProductName      string         `json:"product_name"`
 	Slug             sql.NullString `json:"slug"`
 	Description      sql.NullString `json:"description"`
 	Brand            sql.NullString `json:"brand"`
+	TotalStock       int32          `json:"total_stock"`
 	CategoryID       int64          `json:"category_id"`
+	CategoryName     string         `json:"category_name"`
 	Price            string         `json:"price"`
 	InStock          bool           `json:"in_stock"`
 	PrimaryImage     string         `json:"primary_image"`
-	Attributes       []AttributeDTO `json:"attributes"`
+	DefaultVariant   VariantDTO     `json:"default_variant"`
 	Variants         []VariantDTO   `json:"variants"`
-	DefaultVariantID sql.NullInt64  `json:"default_variant_id"`
 }
 
 type ProductDTO struct {
@@ -25,15 +26,19 @@ type ProductDTO struct {
 	Name      string         `json:"name"`
 	Slug      sql.NullString `json:"slug"`
 	Brand     sql.NullString `json:"brand"`
+	Description sql.NullString `json:"description"`
+	CategoryID int64          `json:"category_id"`
+	TotalStock int32          `json:"total_stock"`
+	ItemStock  int32          `json:"item_stock"`
 	Price     string         `json:"price"`
 	ImageURL  string         `json:"image_url"`
 	InStock   bool           `json:"in_stock"`
 }
 
 type AttributeDTO struct {
-	AttributeID int64  `json:"attribute_id"`
-	Name        string `json:"name"`
-	Value       any    `json:"value"`
+	AttributeID    int64  `json:"attribute_id"`
+	AttributeName  string `json:"attribute_name"`
+	AttributeValue string `json:"attribute_value"`
 }
 
 type VariantDTO struct {
@@ -42,12 +47,7 @@ type VariantDTO struct {
 	Price         string             `json:"price"`
 	StockQuantity int32              `json:"stock_quantity"`
 	ImageURL      string             `json:"image_url"`
-	Options       []VariantOptionDTO `json:"options"`
-}
-
-type VariantOptionDTO struct {
-	Type  string `json:"type"`
-	Value string `json:"value"`
+	Attributes    []AttributeDTO     `json:"attributes"`
 }
 
 type CartItemDTO struct {
