@@ -25,7 +25,7 @@ func BuildAttributeFilterSQL(filters []AttributeFilter, startIndex int) (string,
 	paramIndex := startIndex
 
 	for i, f := range filters {
-		alias := fmt.Sprintf("pav%d", i)
+		alias := fmt.Sprintf("vav%d", i)
 
 		// attribute_id placeholder
 		attrParam := paramIndex
@@ -39,8 +39,8 @@ func BuildAttributeFilterSQL(filters []AttributeFilter, startIndex int) (string,
 		}
 
 		sb.WriteString(fmt.Sprintf(`
-JOIN product_attribute_value %s
-  ON %s.product_id = p.product_id
+JOIN variant_attribute_value %s
+  ON %s.variant_id = p.default_variant_id
  AND %s.attribute_id = $%d
  AND %s.value IN (%s)
 `, alias, alias, alias, attrParam, alias, strings.Join(placeholders, ", ")))
