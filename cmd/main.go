@@ -10,11 +10,14 @@ import (
 
 	"github.com/Secure-Website-Builder/Backend/internal/config"
 	"github.com/Secure-Website-Builder/Backend/internal/http/handlers"
+	"github.com/Secure-Website-Builder/Backend/internal/http/middleware"
 	"github.com/Secure-Website-Builder/Backend/internal/http/router"
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/Secure-Website-Builder/Backend/internal/services/auth"
 	"github.com/Secure-Website-Builder/Backend/internal/services/cart"
 	"github.com/Secure-Website-Builder/Backend/internal/services/category"
 	"github.com/Secure-Website-Builder/Backend/internal/services/product"
+	"github.com/Secure-Website-Builder/Backend/internal/services/store"
 )
 
 func main() {
@@ -44,23 +47,39 @@ func main() {
 	// sqlc generated queries
 	queries := models.New(db)
 
-	// services
+	// Services
 	categoryService := category.NewService(queries)
 	productService := product.New(queries, db)
 	cartService := cart.New(queries)
+	storeService := store.New(queries)
+	authService := auth.New(queries, cfg.JWTSecret)
+
+	// Middleware helpers
+	storeOwnerChecker := middleware.NewStoreOwnerChecker(storeService)
 	
-	// handlers
+
+	// Handlers
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	productHandler := handlers.NewProductHandler(productService)
 	categoryProductHandler := handlers.NewCategoryProductHandler(productService)
 	cartHandler := handlers.NewCartHandler(cartService)
-	
-	// router
-	r := router.SetupRouter(categoryHandler, productHandler, categoryProductHandler, cartHandler)
+	authHandler := handlers.NewAuthHandler(authService)
+
+	// Router
+	r := router.SetupRouter(
+		categoryHandler,
+		productHandler,
+		categoryProductHandler,
+		cartHandler,
+		authHandler,
+		storeOwnerChecker,
+		cfg.JWTSecret,
+	)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"
 	}
+
 	r.Run(":" + port)
 }
