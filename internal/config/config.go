@@ -13,6 +13,7 @@ type Config struct {
 	DBName  string
 	DBHost  string
 	DBPort  string
+	JWTSecret string
 }
 
 // Load validates that all required environment variables are set.
@@ -26,6 +27,7 @@ func Load() (*Config, error) {
 		"DB_NAME",
 		"DB_HOST",
 		"DB_PORT",
+		"JWT_SECRET",
 	}
 
 	missing := []string{}
@@ -52,6 +54,7 @@ func Load() (*Config, error) {
 		DBName:  values["DB_NAME"],
 		DBHost:  values["DB_HOST"],
 		DBPort:  values["DB_PORT"],
+		JWTSecret: values["JWT_SECRET"],
 	}
 
 	return cfg, nil
