@@ -119,3 +119,54 @@ JOIN product_variant v ON v.variant_id = ci.variant_id
 JOIN product p ON p.product_id = v.product_id
 WHERE ci.cart_id = $1
 ORDER BY ci.created_at;
+
+-- name: IsStoreOwner :one
+SELECT EXISTS (
+    SELECT 1
+    FROM store
+    WHERE store_id = $1
+      AND store_owner_id = $2
+);
+
+-- name: CreateStoreOwner :one
+INSERT INTO store_owner (
+  name,
+  email,
+  password_hash
+) VALUES (
+  $1, $2, $3
+)
+RETURNING store_owner_id, name, email, created_at;
+
+-- name: GetStoreOwnerByEmail :one
+SELECT
+  store_owner_id,
+  name,
+  email,
+  password_hash,
+  created_at
+FROM store_owner
+WHERE email = $1;
+
+-- name: CreateCustomer :one
+INSERT INTO customer (
+  store_id,
+  name,
+  email,
+  password_hash
+) VALUES (
+  $1, $2, $3, $4
+)
+RETURNING customer_id, store_id, name, email, created_at;
+
+-- name: GetCustomerByEmail :one
+SELECT
+  customer_id,
+  store_id,
+  name,
+  email,
+  password_hash,
+  created_at
+FROM customer
+WHERE email = $1
+  AND store_id = $2;
