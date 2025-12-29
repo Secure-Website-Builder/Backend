@@ -2,10 +2,12 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/Secure-Website-Builder/Backend/internal/utils"
 )
 
@@ -27,6 +29,8 @@ func (s *Service) Register(
 	ctx context.Context,
 	name, email, password, role string,
 	storeID *int64,
+	phone *string,
+	address *types.Address,
 ) (string, error) {
 	
 	err := utils.CheckPasswordPolicy(password)
@@ -39,6 +43,22 @@ func (s *Service) Register(
 		return "", err
 	}
 
+	addr := types.NullableAddress{Valid: false}
+	if address != nil {
+		addr = types.NullableAddress{
+			Addr:  address,
+			Valid: true,
+		}
+	}
+
+	phoneSQL := sql.NullString{}
+	if phone != nil {
+		phoneSQL = sql.NullString{
+			String: *phone,
+			Valid:  true,
+		}
+	}
+
 	var userID int64
 
 	switch role {
@@ -48,6 +68,8 @@ func (s *Service) Register(
 			Name:         name,
 			Email:        email,
 			PasswordHash: hashed,
+			Phone:       phoneSQL,
+			Address:    addr,
 		})
 		if err != nil {
 			return "", err
@@ -58,12 +80,14 @@ func (s *Service) Register(
 		if storeID == nil {
 			return "", errors.New("store_id is required")
 		}
-
+		
 		user, err := s.queries.CreateCustomer(ctx, models.CreateCustomerParams{
 			StoreID:      *storeID,
 			Name:         name,
 			Email:        email,
 			PasswordHash: hashed,
+			Phone:       phoneSQL,
+			Address:    addr,
 		})
 		if err != nil {
 			return "", err

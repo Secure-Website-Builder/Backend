@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Secure-Website-Builder/Backend/internal/services/auth"
+	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,11 +17,13 @@ func NewAuthHandler(service *auth.Service) *AuthHandler {
 }
 
 type RegisterRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	Role     string `json:"role" binding:"required,oneof=store_owner customer"`
-	StoreID  *int64 `json:"store_id"`
+	Name     string         `json:"name" binding:"required"`
+	Email    string         `json:"email" binding:"required,email"`
+	Password string         `json:"password" binding:"required,min=6"`
+	Role     string         `json:"role" binding:"required,oneof=store_owner customer"`
+	StoreID  *int64         `json:"store_id"`             // required only for customers
+	Phone    *string        `json:"phone,omitempty"`      // optional
+	Address  *types.Address `json:"address,omitempty"`    // optional
 }
 
 type LoginRequest struct {
@@ -40,6 +43,16 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	
+	var phone *string
+	if req.Phone != nil {
+		phone = req.Phone
+	}
+
+	var addr *types.Address
+	if req.Address != nil {
+		addr = req.Address
+	}
 
 	token, err := h.service.Register(
 		c.Request.Context(),
@@ -48,6 +61,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		req.Password,
 		req.Role,
 		req.StoreID,
+		phone,
+		addr,
 	)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
