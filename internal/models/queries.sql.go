@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/google/uuid"
 )
 
@@ -17,9 +18,11 @@ INSERT INTO customer (
   store_id,
   name,
   email,
-  password_hash
+  password_hash,
+  phone,
+  address
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING customer_id, store_id, name, email, created_at
 `
@@ -29,6 +32,8 @@ type CreateCustomerParams struct {
 	Name         string
 	Email        string
 	PasswordHash string
+	Phone        sql.NullString
+	Address      types.NullableAddress
 }
 
 type CreateCustomerRow struct {
@@ -45,6 +50,8 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		arg.Name,
 		arg.Email,
 		arg.PasswordHash,
+		arg.Phone,
+		arg.Address,
 	)
 	var i CreateCustomerRow
 	err := row.Scan(
@@ -61,9 +68,11 @@ const createStoreOwner = `-- name: CreateStoreOwner :one
 INSERT INTO store_owner (
   name,
   email,
-  password_hash
+  password_hash,
+  phone,
+  address
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $5
 )
 RETURNING store_owner_id, name, email, created_at
 `
@@ -72,6 +81,8 @@ type CreateStoreOwnerParams struct {
 	Name         string
 	Email        string
 	PasswordHash string
+	Phone        sql.NullString
+	Address      types.NullableAddress
 }
 
 type CreateStoreOwnerRow struct {
@@ -82,7 +93,13 @@ type CreateStoreOwnerRow struct {
 }
 
 func (q *Queries) CreateStoreOwner(ctx context.Context, arg CreateStoreOwnerParams) (CreateStoreOwnerRow, error) {
-	row := q.db.QueryRowContext(ctx, createStoreOwner, arg.Name, arg.Email, arg.PasswordHash)
+	row := q.db.QueryRowContext(ctx, createStoreOwner,
+		arg.Name,
+		arg.Email,
+		arg.PasswordHash,
+		arg.Phone,
+		arg.Address,
+	)
 	var i CreateStoreOwnerRow
 	err := row.Scan(
 		&i.StoreOwnerID,
@@ -391,9 +408,17 @@ FROM store_owner
 WHERE email = $1
 `
 
-func (q *Queries) GetStoreOwnerByEmail(ctx context.Context, email string) (StoreOwner, error) {
+type GetStoreOwnerByEmailRow struct {
+	StoreOwnerID int64
+	Name         string
+	Email        string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+}
+
+func (q *Queries) GetStoreOwnerByEmail(ctx context.Context, email string) (GetStoreOwnerByEmailRow, error) {
 	row := q.db.QueryRowContext(ctx, getStoreOwnerByEmail, email)
-	var i StoreOwner
+	var i GetStoreOwnerByEmailRow
 	err := row.Scan(
 		&i.StoreOwnerID,
 		&i.Name,

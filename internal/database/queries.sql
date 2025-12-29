@@ -132,9 +132,11 @@ SELECT EXISTS (
 INSERT INTO store_owner (
   name,
   email,
-  password_hash
+  password_hash,
+  phone,
+  address
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4, $5
 )
 RETURNING store_owner_id, name, email, created_at;
 
@@ -153,9 +155,11 @@ INSERT INTO customer (
   store_id,
   name,
   email,
-  password_hash
+  password_hash,
+  phone,
+  address
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING customer_id, store_id, name, email, created_at;
 

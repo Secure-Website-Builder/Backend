@@ -7,6 +7,7 @@ package models
 import (
 	"database/sql"
 
+	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
@@ -60,7 +61,7 @@ type Customer struct {
 	Email        string
 	PasswordHash string
 	Phone        sql.NullString
-	Address      pqtype.NullRawMessage
+	Address      types.NullableAddress
 	CreatedAt    sql.NullTime
 }
 
@@ -170,6 +171,8 @@ type StoreOwner struct {
 	Name         string
 	Email        string
 	PasswordHash string
+	Phone        sql.NullString
+	Address      types.NullableAddress
 	CreatedAt    sql.NullTime
 }
 
