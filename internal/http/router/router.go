@@ -51,7 +51,7 @@ func SetupRouter(
 	cartGroup.GET("", cartHandler.GetCart)
 
 	// Admin-only routes
-	admin := auth.Group("/admin")
+	admin := r.Group("/admin")
 	admin.POST("/login", adminAuthHandler.Login)
 	
 	admin.Use(middleware.RequireRole("admin"))
