@@ -120,6 +120,7 @@ type ListProductFilters struct {
 	MinPrice   *float64
 	MaxPrice   *float64
 	Brand      *string
+	InStock    *bool
 	Attributes []database.AttributeFilter
 }
 
@@ -172,8 +173,8 @@ func (s *Service) ListProducts(ctx context.Context, storeID int64, f ListProduct
 	}
 	offset := (f.Page - 1) * f.Limit
 
-	args := []interface{}{storeID, f.Limit, offset, f.CategoryID, f.Brand, f.MinPrice, f.MaxPrice}
-	paramIndex := 8 // next placeholder index
+	args := []interface{}{storeID, f.Limit, offset, f.CategoryID, f.Brand, f.MinPrice, f.MaxPrice, f.InStock}
+	paramIndex := len(args) + 1 // next placeholder index
 
 	// attribute joins
 	joinSQL, joinArgs := database.BuildAttributeFilterSQL(f.Attributes, paramIndex)

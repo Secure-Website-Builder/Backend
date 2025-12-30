@@ -23,5 +23,6 @@ WHERE p.store_id = $1
   AND ($5::TEXT IS NULL OR p.brand = $5)
   AND ($6::DECIMAL IS NULL OR pv.price >= $6)
   AND ($7::DECIMAL IS NULL OR pv.price <= $7)
+  AND ($8::BOOLEAN IS NULL OR p.in_stock = $8)
 ORDER BY p.created_at DESC
 LIMIT $2 OFFSET $3;

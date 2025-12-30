@@ -106,6 +106,17 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		brandPtr = &v
 	}
 
+	// instock
+	var instock *bool
+	if v := c.Query("instock"); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid instock"})
+			return
+		}
+		instock = &b
+	}
+
 	// reserved params
 	reserved := map[string]bool{
 		"page":      true,
@@ -114,6 +125,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		"min-price": true,
 		"max-price": true,
 		"brand":     true,
+		"instock":    true,
 	}
 
 	// ---------------------------------------
@@ -153,6 +165,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		MinPrice:   minPricePtr,
 		MaxPrice:   maxPricePtr,
 		Brand:      brandPtr,
+		InStock:    instock,
 		Attributes: attrFilters,
 	}
 
