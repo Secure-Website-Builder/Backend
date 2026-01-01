@@ -65,11 +65,11 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 	if v := c.Query("category"); v != "" {
 		categoryPtr = &v
 	}
-	
+
 	var categoryID *int64
 	if categoryPtr == nil {
 		categoryID = nil
-	}else {
+	} else {
 		id, err := h.Service.ResolveCategoryNameToID(ctx, storeID, *categoryPtr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category"})
@@ -125,7 +125,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		"min-price": true,
 		"max-price": true,
 		"brand":     true,
-		"instock":    true,
+		"instock":   true,
 	}
 
 	// ---------------------------------------

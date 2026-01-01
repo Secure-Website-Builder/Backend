@@ -28,7 +28,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 		StoreID:   storeID,
 		ProductID: productID,
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -95,20 +95,20 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 	}
 
 	return &models.ProductFullDetailsDTO{
-		ProductID:        p.ProductID,
-		StoreID:          p.StoreID,
-		ProductName:      p.Name,
-		Slug:             p.Slug,
-		Description:      p.Description,
-		Brand:            p.Brand,
-		TotalStock:       p.TotalStock,
-		CategoryID:       p.CategoryID,
-		CategoryName:     p.CategoryName,
-		InStock:          p.InStock,
-		Price:            p.Price,
-		PrimaryImage:     p.PrimaryImage,
-		DefaultVariant:   defaultVariantDTO,
-		Variants:         variants,
+		ProductID:      p.ProductID,
+		StoreID:        p.StoreID,
+		ProductName:    p.Name,
+		Slug:           p.Slug,
+		Description:    p.Description,
+		Brand:          p.Brand,
+		TotalStock:     p.TotalStock,
+		CategoryID:     p.CategoryID,
+		CategoryName:   p.CategoryName,
+		InStock:        p.InStock,
+		Price:          p.Price,
+		PrimaryImage:   p.PrimaryImage,
+		DefaultVariant: defaultVariantDTO,
+		Variants:       variants,
 	}, nil
 }
 

@@ -61,7 +61,6 @@ func main() {
 
 	// Middleware helpers
 	storeOwnerChecker := middleware.NewStoreOwnerChecker(storeService)
-	
 
 	// Handlers
 	categoryHandler := handlers.NewCategoryHandler(categoryService)

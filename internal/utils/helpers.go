@@ -16,7 +16,7 @@ func HashPassword(password string) (string, error) {
 	if len([]byte(password)) > 72 {
 		return "", errors.New("password too long")
 	}
-	
+
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	return string(bytes), err
 }

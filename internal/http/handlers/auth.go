@@ -21,13 +21,13 @@ type RegisterRequest struct {
 	Email    string         `json:"email" binding:"required,email"`
 	Password string         `json:"password" binding:"required,min=6"`
 	Role     string         `json:"role" binding:"required,oneof=store_owner customer"`
-	StoreID  *int64         `json:"store_id"`             // required only for customers
-	Phone    *string        `json:"phone,omitempty"`      // optional
-	Address  *types.Address `json:"address,omitempty"`    // optional
+	StoreID  *int64         `json:"store_id"`          // required only for customers
+	Phone    *string        `json:"phone,omitempty"`   // optional
+	Address  *types.Address `json:"address,omitempty"` // optional
 }
 
 type LoginRequest struct {
-	Email   string `json:"email" binding:"required,email"`
+	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"role" binding:"required,oneof=store_owner customer"`
 	StoreID  *int64 `json:"store_id"`
@@ -43,7 +43,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	var phone *string
 	if req.Phone != nil {
 		phone = req.Phone
@@ -79,7 +79,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	)
 	c.JSON(http.StatusOK, AuthResponse{Token: accessToken})
 }
-
 
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
@@ -138,7 +137,6 @@ func (h *AuthHandler) AdminLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -154,7 +152,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.SetCookie(
 		"refresh_token",
 		newRefresh,

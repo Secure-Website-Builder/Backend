@@ -25,7 +25,7 @@ func (s *Service) GetCart(
 
 	cartRow, err := s.q.GetCartBySession(ctx, models.GetCartBySessionParams{
 		SessionID: sessionID,
-		StoreID:  storeID,
+		StoreID:   storeID,
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {

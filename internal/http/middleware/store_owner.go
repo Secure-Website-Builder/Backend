@@ -23,7 +23,7 @@ func (s *StoreOwnerChecker) IsOwner(c *gin.Context) {
 		c.Next()
 		return
 	}
-	
+
 	userID := c.GetInt64("user_id")
 
 	storeIDStr := c.Param("store_id")

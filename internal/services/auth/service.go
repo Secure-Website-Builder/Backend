@@ -35,7 +35,7 @@ func (s *Service) Register(
 
 	err = utils.CheckPasswordPolicy(password)
 	if err != nil {
-		return "","", err
+		return "", "", err
 	}
 
 	hashed, err := utils.HashPassword(password)
@@ -68,11 +68,11 @@ func (s *Service) Register(
 			Name:         name,
 			Email:        email,
 			PasswordHash: hashed,
-			Phone:       phoneSQL,
-			Address:    addr,
+			Phone:        phoneSQL,
+			Address:      addr,
 		})
 		if err != nil {
-			return "","", err
+			return "", "", err
 		}
 		userID = user.StoreOwnerID
 
@@ -80,17 +80,17 @@ func (s *Service) Register(
 		if storeID == nil {
 			return "", "", errors.New("store_id is required")
 		}
-		
+
 		user, err := s.queries.CreateCustomer(ctx, models.CreateCustomerParams{
 			StoreID:      *storeID,
 			Name:         name,
 			Email:        email,
 			PasswordHash: hashed,
-			Phone:       phoneSQL,
-			Address:    addr,
+			Phone:        phoneSQL,
+			Address:      addr,
 		})
 		if err != nil {
-			return "","", err
+			return "", "", err
 		}
 		userID = user.CustomerID
 
@@ -106,11 +106,11 @@ func (s *Service) Register(
 		24*time.Hour,
 	)
 	if err != nil {
-			return "", "", err
+		return "", "", err
 	}
 	refreshToken, err = utils.GenerateRefreshToken()
 	if err != nil {
-			return "", "", err
+		return "", "", err
 	}
 
 	nullableStoreID := sql.NullInt64{
@@ -124,14 +124,14 @@ func (s *Service) Register(
 	}
 
 	err = s.queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
-			Token:     refreshToken,
-			UserID:    userID,
-			UserRole:  role,
-			StoreID:   nullableStoreID,
-			ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		Token:     refreshToken,
+		UserID:    userID,
+		UserRole:  role,
+		StoreID:   nullableStoreID,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 	})
 	if err != nil {
-			return "", "", err
+		return "", "", err
 	}
 
 	return accessToken, refreshToken, nil
@@ -183,20 +183,20 @@ func (s *Service) Login(
 		return "", "", errors.New("invalid credentials")
 	}
 
-		accessToken, err = utils.GenerateJWT(
+	accessToken, err = utils.GenerateJWT(
 		userID,
 		role,
 		storeID,
 		s.jwtSecret,
 		24*time.Hour,
 	)
-	
+
 	if err != nil {
-			return "", "", err
+		return "", "", err
 	}
 	refreshToken, err = utils.GenerateRefreshToken()
 	if err != nil {
-			return "", "", err
+		return "", "", err
 	}
 
 	nullableStoreID := sql.NullInt64{
@@ -210,14 +210,14 @@ func (s *Service) Login(
 	}
 
 	err = s.queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
-			Token:     refreshToken,
-			UserID:    userID,
-			UserRole:  role,
-			StoreID:   nullableStoreID,
-			ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		Token:     refreshToken,
+		UserID:    userID,
+		UserRole:  role,
+		StoreID:   nullableStoreID,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 	})
 	if err != nil {
-			return "", "", err
+		return "", "", err
 	}
 
 	return accessToken, refreshToken, nil

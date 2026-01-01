@@ -29,25 +29,25 @@ func SetupRouter(
 
 	stores := auth.Group("/stores/:store_id")
 	{
-			// Shared middlewares for customer/store_owner/admin
-			stores.Use(
-					middleware.RequireRole("customer", "store_owner", "admin"),
-					middleware.RequireSameStore(),
-					middleware.RequireStoreOwner(storeOwnerChecker),
-			)
+		// Shared middlewares for customer/store_owner/admin
+		stores.Use(
+			middleware.RequireRole("customer", "store_owner", "admin"),
+			middleware.RequireSameStore(),
+			middleware.RequireStoreOwner(storeOwnerChecker),
+		)
 
-			stores.GET("/categories", categoryHandler.ListCategories)
-			stores.GET("/categories/:category_id/attributes", categoryHandler.ListAttributes)
-			stores.GET("/categories/:category_id/top-products", categoryProductHandler.GetTopProducts)
-			stores.GET("/products", productHandler.ListProducts)
-			stores.GET("/products/:product_id", productHandler.GetProduct)
+		stores.GET("/categories", categoryHandler.ListCategories)
+		stores.GET("/categories/:category_id/attributes", categoryHandler.ListAttributes)
+		stores.GET("/categories/:category_id/top-products", categoryProductHandler.GetTopProducts)
+		stores.GET("/products", productHandler.ListProducts)
+		stores.GET("/products/:product_id", productHandler.GetProduct)
 	}
 
 	// Cart endpoints
 	cartGroup := auth.Group("/stores/:store_id/cart")
 	cartGroup.Use(
-			middleware.RequireRole("customer", "admin"),
-			middleware.RequireSameStore(),
+		middleware.RequireRole("customer", "admin"),
+		middleware.RequireSameStore(),
 	)
 	cartGroup.GET("", cartHandler.GetCart)
 
