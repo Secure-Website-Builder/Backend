@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/Secure-Website-Builder/Backend/internal/utils"
 )
 
 func (s *Service) GetTopProductsByCategory(
@@ -34,7 +35,7 @@ func (s *Service) GetTopProductsByCategory(
 			TotalStock:  p.ProductTotalStock,
 			ItemStock:   p.ItemStock,
 			Price:       p.Price,
-			ImageURL:    p.PrimaryImage,
+			ImageURL:    utils.NullStringToPtr(p.PrimaryImage),
 			InStock:     p.InStock,
 		})
 	}

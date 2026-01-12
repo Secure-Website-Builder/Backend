@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/Secure-Website-Builder/Backend/internal/utils"
 	"github.com/google/uuid"
 )
 
@@ -60,7 +61,7 @@ func (s *Service) GetCart(
 			ProductID:  it.ProductID,
 			Product:    it.ProductName,
 			SKU:        it.Sku,
-			ImageURL:   it.PrimaryImageUrl,
+			ImageURL:   utils.NullStringToPtr(it.PrimaryImageUrl),
 			Price:      it.UnitPrice,
 			Quantity:   it.Quantity,
 			Subtotal:   it.Subtotal,
