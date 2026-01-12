@@ -53,13 +53,20 @@ DB_USER=<your-db-user>
 DB_PASSWORD=<your-db-password>
 DB_NAME=<your-db-name>
 DB_HOST=db
-DB_PORT=<host-port-for-db>
+
+# MinIO / S3 Storage
+MINIO_ENDPOINT=minio:<your-minio-port>
+MINIO_PORT=<your-minio-port>
+MINIO_USER=<your-minio-user>
+MINIO_PASS=<your-minio-password>
+MINIO_BUCKET=<your-bucket-name>
 
 # Auth
 JWT_SECRET=<your-jwt-secret>
 ```
 
-> This file stores secrets and host-specific configuration. **Do not commit it to version control.**
+> - This file stores secrets and host-specific configuration. **Do not commit it to version control.**
+> - MinIO is used for image storage; local development uses the minio container.
 
 ---
 
@@ -91,8 +98,48 @@ docker compose down
 
 ---
 
+## MinIO / Image Storage (Local Development)
+
+MinIO is a lightweight S3-compatible storage server used for storing product images.
+
+### Access MinIO Web UI:
+
+```bash
+http://localhost:<MINIO_PORT>
+```
+
+---
+
+## Optional: Seeding an Initial Admin (Local Development Only)
+
+For local development, you may want to seed an initial admin account.
+
+1. Create a file at:
+
+```pgsql
+internal/database/seed_admin.sql
+```
+
+2. Add the following (replace placeholders):
+
+```sql
+-- Insert initial admin (local development only)
+INSERT INTO admin (email, password_hash)
+VALUES (
+'your-admin-email@example.com',
+'<bcrypt-hashed-password>'
+);
+```
+
+> ⚠️ Notes:
+>
+> - This file is ignored by git and must not be committed.
+> - The password must be bcrypt-hashed, not plain text.
+> - This script runs only on first database initialization.
+
+---
+
 ## Notes
 
 - The backend container mounts your local code for **live code updates**, so you don’t need to rebuild the image after code changes.
-- Database port is configurable via `.env` (`DB_PORT`) and maps to container port `5432`.
 - Ensure the `.env` file is in the project root before running `docker compose up`.
