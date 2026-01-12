@@ -61,6 +61,7 @@ func SetupRouter(
 	{
 		dashboard.POST("/products", productHandler.CreateProduct)
 		dashboard.POST("/products/:product_id/variants", productHandler.AddVariant)
+		dashboard.POST("/products/:product_id/variants/:variant_id/images", productHandler.UploadVariantImage)
 	}
 
 	// Admin-only routes
