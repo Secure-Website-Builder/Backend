@@ -68,7 +68,7 @@ CREATE TABLE product_variant (
   sku             VARCHAR(100) NOT NULL,
   price           DECIMAL(10,2) NOT NULL,
   stock_quantity  INT DEFAULT 0 NOT NULL,
-  primary_image_url  VARCHAR(500) NOT NULL,
+  primary_image_url  VARCHAR(500),
   created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   deleted_at      TIMESTAMP WITH TIME ZONE NULL,

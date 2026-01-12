@@ -128,7 +128,7 @@ type ProductVariant struct {
 	Sku             string
 	Price           string
 	StockQuantity   int32
-	PrimaryImageUrl string
+	PrimaryImageUrl sql.NullString
 	CreatedAt       sql.NullTime
 	UpdatedAt       sql.NullTime
 	DeletedAt       sql.NullTime
