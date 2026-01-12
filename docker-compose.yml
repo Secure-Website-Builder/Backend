@@ -13,6 +13,17 @@ services:
       - ./internal/database/seed_admin.sql:/docker-entrypoint-initdb.d/02_seed_admin.sql:ro
       - ./internal/database/seed_categories.sql:/docker-entrypoint-initdb.d/03_seed_categories.sql:ro
 
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - "${MINIO_PORT}:9000"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASS}
+    volumes:
+      - minio_data:/data
+
   app:
     build: .
     container_name: myapp_app
@@ -27,3 +38,4 @@ services:
 
 volumes:
   pgdata:
+  minio_data:
