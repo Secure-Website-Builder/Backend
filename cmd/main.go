@@ -66,7 +66,6 @@ func main() {
 		log.Fatalf("failed to initialize image storage: %v", err)
 	}
 
-
 	// Services
 	categoryService := category.NewService(queries)
 	productService := product.New(queries, db, storage)

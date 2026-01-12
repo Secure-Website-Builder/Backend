@@ -92,7 +92,6 @@ func HashAttributes(attrs []models.VariantAttributeInput) string {
 	return hex.EncodeToString(sum[:])
 }
 
-
 func InterfaceSlice[T any](s []T) []interface{} {
 	out := make([]interface{}, len(s))
 	for i := range s {
@@ -102,8 +101,8 @@ func InterfaceSlice[T any](s []T) []interface{} {
 }
 
 func NullStringToPtr(ns sql.NullString) *string {
-    if ns.Valid {
-        return &ns.String
-    }
-    return nil
+	if ns.Valid {
+		return &ns.String
+	}
+	return nil
 }

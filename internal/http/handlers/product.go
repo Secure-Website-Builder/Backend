@@ -190,42 +190,41 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 }
 
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
-    storeID, _ := strconv.ParseInt(c.Param("store_id"), 10, 64)
+	storeID, _ := strconv.ParseInt(c.Param("store_id"), 10, 64)
 
-    // 1. Read JSON part
-    jsonPart := c.PostForm("data")
-    if jsonPart == "" {
-        c.JSON(400, gin.H{"error": "missing data field"})
-        return
-    }
+	// 1. Read JSON part
+	jsonPart := c.PostForm("data")
+	if jsonPart == "" {
+		c.JSON(400, gin.H{"error": "missing data field"})
+		return
+	}
 
-    var req models.CreateProductInput
-    if err := json.Unmarshal([]byte(jsonPart), &req); err != nil {
-        c.JSON(400, gin.H{"error": "invalid json"})
-        return
-    }
+	var req models.CreateProductInput
+	if err := json.Unmarshal([]byte(jsonPart), &req); err != nil {
+		c.JSON(400, gin.H{"error": "invalid json"})
+		return
+	}
 
-    // 2. Read file (optional)
-    file, header, _ := c.Request.FormFile("primary_image")
+	// 2. Read file (optional)
+	file, header, _ := c.Request.FormFile("primary_image")
 
-    product, variant, err := h.Service.CreateProduct(
-        c.Request.Context(),
-        storeID,
-        req,
-        file,
-        header,
-    )
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
+	product, variant, err := h.Service.CreateProduct(
+		c.Request.Context(),
+		storeID,
+		req,
+		file,
+		header,
+	)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(201, gin.H{
-        "product": product,
-        "default_variant": variant,
-    })
+	c.JSON(201, gin.H{
+		"product":         product,
+		"default_variant": variant,
+	})
 }
-
 
 func (h *ProductHandler) AddVariant(c *gin.Context) {
 	storeID, _ := strconv.ParseInt(c.Param("store_id"), 10, 64)
@@ -234,66 +233,65 @@ func (h *ProductHandler) AddVariant(c *gin.Context) {
 	jsonPart := c.PostForm("data")
 	var req models.VariantInput
 	if err := json.Unmarshal([]byte(jsonPart), &req); err != nil {
-			c.JSON(400, gin.H{"error": "invalid json"})
-			return
+		c.JSON(400, gin.H{"error": "invalid json"})
+		return
 	}
 
 	file, header, _ := c.Request.FormFile("primary_image")
 
 	variant, err := h.Service.AddVariant(
-			c.Request.Context(),
-			storeID,
-			productID,
-			req,
-			file,
-			header,
+		c.Request.Context(),
+		storeID,
+		productID,
+		req,
+		file,
+		header,
 	)
 	if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(201, gin.H{"variant": variant})
 }
 
-
 func (h *ProductHandler) UploadVariantImage(c *gin.Context) {
-    storeID, _ := strconv.ParseInt(c.Param("store_id"), 10, 64)
-    productID, _ := strconv.ParseInt(c.Param("product_id"), 10, 64)
-    variantID, _ := strconv.ParseInt(c.Param("variant_id"), 10, 64)
+	storeID, _ := strconv.ParseInt(c.Param("store_id"), 10, 64)
+	productID, _ := strconv.ParseInt(c.Param("product_id"), 10, 64)
+	variantID, _ := strconv.ParseInt(c.Param("variant_id"), 10, 64)
 
-    isPrimary := c.PostForm("is_primary") == "true"
+	isPrimary := c.PostForm("is_primary") == "true"
 
-    fileHeader, err := c.FormFile("file")
-    if err != nil {
-        c.JSON(400, gin.H{"error": "file is required"})
-        return
-    }
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(400, gin.H{"error": "file is required"})
+		return
+	}
 
-    file, err := fileHeader.Open()
-    if err != nil {
-        c.JSON(500, gin.H{"error": "cannot open file"})
-        return
-    }
-    defer file.Close()
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "cannot open file"})
+		return
+	}
+	defer file.Close()
 
-    url, err := h.Service.UploadVariantImage(
-        c.Request.Context(),
-        storeID,
-        productID,
-        variantID,
-        file,
-        fileHeader,
-        isPrimary,
-    )
+	url, err := h.Service.UploadVariantImage(
+		c.Request.Context(),
+		storeID,
+		productID,
+		variantID,
+		file,
+		fileHeader,
+		isPrimary,
+	)
 
-    if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
-        return
-    }
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(201, gin.H{
-        "image_url": url,
-        "is_primary": isPrimary,
-    })
+	c.JSON(201, gin.H{
+		"image_url":  url,
+		"is_primary": isPrimary,
+	})
 }

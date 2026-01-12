@@ -10,8 +10,8 @@ import (
 )
 
 type ImageStorage interface {
-    Upload(ctx context.Context, key string, r io.Reader, size int64, contentType string) (publicURL string, err error)
-    Delete(ctx context.Context, key string) error
+	Upload(ctx context.Context, key string, r io.Reader, size int64, contentType string) (publicURL string, err error)
+	Delete(ctx context.Context, key string) error
 }
 
 type MinIOStorage struct {

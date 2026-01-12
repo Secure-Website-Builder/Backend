@@ -6,14 +6,14 @@ import (
 )
 
 type Config struct {
-	AppEnv    string
-	AppPort   string
-	DBUser    string
-	DBPass    string
-	DBName    string
-	DBHost    string
-	DBPort    string
-	JWTSecret string
+	AppEnv        string
+	AppPort       string
+	DBUser        string
+	DBPass        string
+	DBName        string
+	DBHost        string
+	DBPort        string
+	JWTSecret     string
 	MinIOEndpoint string
 	MinIOUser     string
 	MinIOPass     string
@@ -54,13 +54,13 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		AppEnv:    values["APP_ENV"],
-		AppPort:   values["APP_PORT"],
-		DBUser:    values["DB_USER"],
-		DBPass:    values["DB_PASSWORD"],
-		DBName:    values["DB_NAME"],
-		DBHost:    values["DB_HOST"],
-		JWTSecret: values["JWT_SECRET"],
+		AppEnv:        values["APP_ENV"],
+		AppPort:       values["APP_PORT"],
+		DBUser:        values["DB_USER"],
+		DBPass:        values["DB_PASSWORD"],
+		DBName:        values["DB_NAME"],
+		DBHost:        values["DB_HOST"],
+		JWTSecret:     values["JWT_SECRET"],
 		MinIOEndpoint: values["MINIO_ENDPOINT"],
 		MinIOUser:     values["MINIO_USER"],
 		MinIOPass:     values["MINIO_PASS"],
