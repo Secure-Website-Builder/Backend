@@ -14,6 +14,10 @@ type Config struct {
 	DBHost    string
 	DBPort    string
 	JWTSecret string
+	MinIOEndpoint string
+	MinIOUser     string
+	MinIOPass     string
+	MinIOBucket   string
 }
 
 // Load validates that all required environment variables are set.
@@ -28,6 +32,10 @@ func Load() (*Config, error) {
 		"DB_HOST",
 		"DB_PORT",
 		"JWT_SECRET",
+		"MINIO_ENDPOINT",
+		"MINIO_USER",
+		"MINIO_PASS",
+		"MINIO_BUCKET",
 	}
 
 	missing := []string{}
@@ -55,6 +63,10 @@ func Load() (*Config, error) {
 		DBHost:    values["DB_HOST"],
 		DBPort:    values["DB_PORT"],
 		JWTSecret: values["JWT_SECRET"],
+		MinIOEndpoint: values["MINIO_ENDPOINT"],
+		MinIOUser:     values["MINIO_USER"],
+		MinIOPass:     values["MINIO_PASS"],
+		MinIOBucket:   values["MINIO_BUCKET"],
 	}
 
 	return cfg, nil
