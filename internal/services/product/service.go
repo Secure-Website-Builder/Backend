@@ -4,22 +4,26 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"mime/multipart"
 	"os"
 	"strings"
 
 	"github.com/Secure-Website-Builder/Backend/internal/database"
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/Secure-Website-Builder/Backend/internal/storage"
 	"github.com/Secure-Website-Builder/Backend/internal/utils"
+	"github.com/google/uuid"
 )
 
 type Service struct {
-	q  *models.Queries
-	db *sql.DB
+	q      *models.Queries
+	storage storage.ImageStorage
+	db     *sql.DB
 }
 
 // New creates the product service; pass sqlc queries struct and raw *sql.DB
-func New(q *models.Queries, db *sql.DB) *Service {
-	return &Service{q: q, db: db}
+func New(q *models.Queries, db *sql.DB, storage storage.ImageStorage) *Service {
+	return &Service{q: q, db: db, storage: storage}
 }
 
 func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) (*models.ProductFullDetailsDTO, error) {
@@ -66,7 +70,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 				SKU:           v.Sku,
 				Price:         v.Price,
 				StockQuantity: v.StockQuantity,
-				ImageURL:      v.PrimaryImageUrl,
+				ImageURL:      utils.NullStringToPtr(v.PrimaryImageUrl),
 				Attributes:    variantAttributes,
 			}
 			continue
@@ -79,7 +83,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 				SKU:           v.Sku,
 				Price:         v.Price,
 				StockQuantity: v.StockQuantity,
-				ImageURL:      v.PrimaryImageUrl,
+				ImageURL:      utils.NullStringToPtr(v.PrimaryImageUrl),
 				Attributes:    variantAttributes,
 			}
 			continue
@@ -90,7 +94,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 			SKU:           v.Sku,
 			Price:         v.Price,
 			StockQuantity: v.StockQuantity,
-			ImageURL:      v.PrimaryImageUrl,
+			ImageURL:      utils.NullStringToPtr(v.PrimaryImageUrl),
 			Attributes:    variantAttributes,
 		})
 	}
@@ -107,7 +111,7 @@ func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) 
 		CategoryName:   p.CategoryName,
 		InStock:        p.InStock,
 		Price:          p.Price,
-		PrimaryImage:   p.PrimaryImage,
+		PrimaryImage:   utils.NullStringToPtr(p.PrimaryImage),
 		DefaultVariant: defaultVariantDTO,
 		Variants:       variants,
 	}, nil
@@ -225,10 +229,17 @@ func (s *Service) ListProducts(ctx context.Context, storeID int64, f ListProduct
 	return res, nil
 }
 
+// TODO: Success Response with note
+// 			- Product created but image not uploaded try to upload it again 
+// 			- The product were already exist we increased the stock of the existing one
+// 			- The product were already exist we did not change it's image if you want to change it edit the product not insert a new one
+
 func (s *Service) CreateProduct(
-	ctx context.Context,
-	storeID int64,
-	in models.CreateProductInput,
+    ctx context.Context,
+    storeID int64,
+    in models.CreateProductInput,
+    image multipart.File,
+    header *multipart.FileHeader,
 ) (*models.Product, *models.ProductVariant, error) {
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -329,7 +340,6 @@ func (s *Service) CreateProduct(
 				Sku:             in.Variant.SKU,
 				Price:           fmt.Sprintf("%f", in.Variant.Price),
 				StockQuantity:   in.Variant.Stock,
-				PrimaryImageUrl: in.Variant.ImageURL,
 			})
 			if err != nil {
 				return nil, nil, err
@@ -358,7 +368,6 @@ func (s *Service) CreateProduct(
 			Sku:             in.Variant.SKU,
 			Price:           fmt.Sprintf("%f", in.Variant.Price),
 			StockQuantity:   in.Variant.Stock,
-			PrimaryImageUrl: in.Variant.ImageURL,
 		})
 		if err != nil {
 			return nil, nil, err
@@ -377,6 +386,31 @@ func (s *Service) CreateProduct(
 
 		finalVariant = newVariant
 		createdNewVariant = true
+	}
+
+	var uploadedKey string
+	if image != nil && finalVariant.PrimaryImageUrl.Valid == false {
+		key := fmt.Sprintf("stores/%d/variants/%d/%s",
+				storeID,
+				finalVariant.VariantID,
+				uuid.NewString(),
+		)
+
+		url, err := s.storage.Upload(ctx, key, image, header.Size, header.Header.Get("Content-Type"))
+
+		if err == nil {
+			uploadedKey = key
+			err = qtx.SetPrimaryVariantImage(ctx, models.SetPrimaryVariantImageParams{
+				VariantID: finalVariant.VariantID,
+				PrimaryImageUrl: sql.NullString{
+					String: url,
+					Valid:  true,
+				},
+			})
+			if err != nil {
+				_ = s.storage.Delete(ctx, uploadedKey)
+			}
+		}
 	}
 
 	// 7. Set default variant if product was previously not sellable
@@ -403,18 +437,27 @@ func (s *Service) CreateProduct(
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, nil, err
+    if uploadedKey != "" {
+        _ = s.storage.Delete(ctx, uploadedKey)
+    }
+    return nil, nil, err
 	}
 
 	return &product, &finalVariant, nil
 }
 
 
+// TODO: Success Response with note
+// 			- Variant created but image not uploaded try to upload it again
+// 			- The variant were already exist we increased the stock of the existing one
+// 			- The variant were already exist we did not change it's image if you want to change it edit the product not insert a new one
 
 func (s *Service) AddVariant(
-	ctx context.Context,
-	storeID, productID int64,
-	in models.VariantInput,
+    ctx context.Context,
+    storeID, productID int64,
+    in models.VariantInput,
+    image multipart.File,
+    header *multipart.FileHeader,
 ) (*models.ProductVariant, error) {
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -498,7 +541,6 @@ func (s *Service) AddVariant(
 			Sku:             in.SKU,
 			Price:           fmt.Sprintf("%f", in.Price),
 			StockQuantity:   in.Stock,
-			PrimaryImageUrl: in.ImageURL,
 		})
 		if err != nil {
 			return nil, err
@@ -514,6 +556,31 @@ func (s *Service) AddVariant(
 				return nil, err
 			}
 		}
+	}
+
+	var uploadedKey string
+	if image != nil && finalVariant.PrimaryImageUrl.Valid == false {
+    key := fmt.Sprintf("stores/%d/variants/%d/%s",
+        storeID,
+        finalVariant.VariantID,
+        uuid.NewString(),
+    )
+
+    url, err := s.storage.Upload(ctx, key, image, header.Size, header.Header.Get("Content-Type"))
+    if err == nil {
+        uploadedKey = key
+        err = qtx.SetPrimaryVariantImage(ctx, models.SetPrimaryVariantImageParams{
+            VariantID: finalVariant.VariantID,
+            PrimaryImageUrl: sql.NullString{
+                String: url,
+                Valid:  true,
+            },
+        })
+        if err != nil {
+					_ = s.storage.Delete(ctx, uploadedKey)
+				}
+    }
+
 	}
 
 	// 5. Update product stock
@@ -540,7 +607,10 @@ func (s *Service) AddVariant(
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, err
+    if uploadedKey != "" {
+        _ = s.storage.Delete(ctx, uploadedKey)
+    }
+    return nil, err
 	}
 
 	return &finalVariant, nil
