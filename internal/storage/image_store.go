@@ -9,7 +9,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-type ImageStorage interface {
+type ObjectStorage interface {
 	Upload(ctx context.Context, key string, r io.Reader, size int64, contentType string) (publicURL string, err error)
 	Delete(ctx context.Context, key string) error
 }

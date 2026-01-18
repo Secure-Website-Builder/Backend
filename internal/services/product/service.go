@@ -17,12 +17,12 @@ import (
 
 type Service struct {
 	q       *models.Queries
-	storage storage.ImageStorage
+	storage storage.ObjectStorage
 	db      *sql.DB
 }
 
 // New creates the product service; pass sqlc queries struct and raw *sql.DB
-func New(q *models.Queries, db *sql.DB, storage storage.ImageStorage) *Service {
+func New(q *models.Queries, db *sql.DB, storage storage.ObjectStorage) *Service {
 	return &Service{q: q, db: db, storage: storage}
 }
 
