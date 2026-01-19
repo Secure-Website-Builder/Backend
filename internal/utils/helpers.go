@@ -2,27 +2,27 @@ package utils
 
 import (
 	"crypto/rand"
-	"crypto/sha1" // NEW: For HIBP check
+	"crypto/sha1"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io" // NEW: For HIBP API response
-	"net/http" // NEW: For HIBP API
+	"io"
+	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
-	"regexp" // NEW: For password pattern checks
 
 	"github.com/Secure-Website-Builder/Backend/internal/models"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Password Hashing
 
-// Password hashing
 func HashPassword(password string) (string, error) {
 	if len([]byte(password)) > 72 {
 		return "", errors.New("password too long")
@@ -37,7 +37,15 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 // JWT generation
-func GenerateJWT(userID int64, role string, storeID *int64, secret string, duration time.Duration) (string, error) {
+
+func GenerateJWT(
+	userID int64,
+	role string,
+	storeID *int64,
+	secret string,
+	duration time.Duration,
+) (string, error) {
+
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"role":    role,
@@ -66,8 +74,9 @@ func ParseJWT(tokenStr, secret string) (*jwt.Token, jwt.MapClaims, error) {
 		return nil, nil, errors.New("invalid token")
 	}
 
-	return token, claims, err
+	return token, claims, nil
 }
+
 
 func GenerateRefreshToken() (string, error) {
 	b := make([]byte, 64)
@@ -78,24 +87,22 @@ func GenerateRefreshToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// ---------------------- NEW: Password Policy with MFA ----------------------
+// Password Policy 
 
-func CheckPasswordPolicy(password string, role string) (mfaRequired bool, err error) {
+func CheckPasswordPolicy(password string, role string) (bool, error) {
 	switch role {
 	case "customer":
-		err = validateCustomerPassword(password)
-		mfaRequired = false // Customers do NOT require MFA
+		return false, validateCustomerPassword(password)
+
 	case "store_owner":
-		err = validateBusinessOwnerPassword(password)
-		mfaRequired = true // Business Owners require MFA
+		return true, validateBusinessOwnerPassword(password)
+
 	default:
-		err = errors.New("unknown user role")
-		mfaRequired = false
+		return false, errors.New("unknown user role")
 	}
-	return
 }
 
-// Customer password rules: min 8 chars, letters + numbers
+// Customer rules
 func validateCustomerPassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("password must be at least 8 characters")
@@ -106,7 +113,7 @@ func validateCustomerPassword(password string) error {
 	return nil
 }
 
-// Business Owner password rules: min 12 chars, letters + numbers + symbols, HIBP check
+// Business Owner rules
 func validateBusinessOwnerPassword(password string) error {
 	if len(password) < 12 {
 		return errors.New("password must be at least 12 characters")
@@ -115,30 +122,32 @@ func validateBusinessOwnerPassword(password string) error {
 		return errors.New("password must include letters, numbers, and symbols")
 	}
 
-	// HIBP check
+	// HIBP check 
 	pwned, err := IsPasswordPwned(password)
 	if err != nil {
-		return errors.New("failed to check password against breached database")
-	}
-	if pwned {
+		// TODO: log the error and skip HIBP check
+	} else if pwned {
 		return errors.New("password has been found in a data breach, please choose another one")
 	}
 
 	return nil
 }
 
-// Helper functions for password patterns
+
 func hasLetter(s string) bool {
 	return regexp.MustCompile(`[A-Za-z]`).MatchString(s)
 }
+
 func hasNumber(s string) bool {
 	return regexp.MustCompile(`[0-9]`).MatchString(s)
 }
+
 func hasSymbol(s string) bool {
 	return regexp.MustCompile(`[^A-Za-z0-9]`).MatchString(s)
 }
 
-// HIBP k-anonymity API check
+// HIBP Check 
+
 func IsPasswordPwned(password string) (bool, error) {
 	hash := sha1.Sum([]byte(password))
 	hashHex := strings.ToUpper(hex.EncodeToString(hash[:]))
@@ -146,15 +155,37 @@ func IsPasswordPwned(password string) (bool, error) {
 	prefix := hashHex[:5]
 	suffix := hashHex[5:]
 
-	resp, err := http.Get("https://api.pwnedpasswords.com/range/" + prefix)
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://api.pwnedpasswords.com/range/"+prefix,
+		nil,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	req.Header.Set("User-Agent", "password-checker/1.0")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return false, err
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	lines := strings.Split(string(body), "\n")
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("HIBP API error: %s", resp.Status)
+	}
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+
+	lines := strings.Split(string(body), "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, ":")
 		if len(parts) < 2 {
@@ -164,10 +195,9 @@ func IsPasswordPwned(password string) (bool, error) {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
-
-// ---------------------- END OF NEW CODE PASSWORD POLICY FUNCTIONS ----------------------
 
 func HashAttributes(attrs []models.VariantAttributeInput) string {
 	sort.Slice(attrs, func(i, j int) bool {

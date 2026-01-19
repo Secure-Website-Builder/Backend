@@ -33,11 +33,11 @@ func (s *Service) Register(
 	address *types.Address,
 ) (accessToken, refreshToken string, err error) {
 
-	mfaRequired, err := utils.CheckPasswordPolicy(password, role) // NEW: Check password against policy
+	mfaRequired, err := utils.CheckPasswordPolicy(password, role) 
 	if err != nil {
 		return "", "", err
 	}
-	_ = mfaRequired //NEW TODO: implement MFA logic
+	_ = mfaRequired //TODO: implement MFA logic
 
 	hashed, err := utils.HashPassword(password)
 	if err != nil {
