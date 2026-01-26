@@ -1,63 +1,59 @@
 package media
-import (
-"bytes"
-"context"
-"fmt"
-"io"
-"net/http"
 
-"github.com/Secure-Website-Builder/Backend/internal/storage"
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/Secure-Website-Builder/Backend/internal/storage"
 )
 
 type Service struct {
-    storage storage.ObjectStorage
+	storage storage.ObjectStorage
 }
 
+const MaxImageSize = 5 * 1024 * 1024
+
+// UploadImage validates and uploads an image. Always returns URL and MIME.
 func (s *Service) UploadImage(
 	ctx context.Context,
 	key string,
 	r io.Reader,
-	maxSize int64,
-) (string, error) {
+) (string, string, error) {
 
-	validated, mime, err := ValidateImage(r, maxSize)
+	// Validate the image first
+	validated, mime, err := ValidateImage(r)
 	if err != nil {
-		return "", err
+		return "", "", fmt.Errorf("invalid image: %w", err)
 	}
 
+	// Upload to storage
 	url, err := s.storage.Upload(ctx, key, validated, -1, mime)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return url, nil
+	return url, mime, nil
 }
 
-// Image Validation
-
+// Allowed MIME types
 var allowedMIMEs = map[string]bool{
 	"image/jpeg": true,
 	"image/png":  true,
 	"image/webp": true,
 }
 
-func ValidateImage(
-	r io.Reader,
-	maxSize int64,
-) (io.Reader, string, error) {
+// ValidateImage checks the image's size and type before upload.
+func ValidateImage(r io.Reader) (io.Reader, string, error) {
 
-	// Enforce size at I/O level
-	limited := io.LimitReader(r, maxSize+1)
+	limited := io.LimitReader(r, MaxImageSize+1)
 
-	// Read header for MIME sniffing
 	header := make([]byte, 512)
 	n, err := limited.Read(header)
 	if err != nil && err != io.EOF {
 		return nil, "", fmt.Errorf("reading image header: %w", err)
-	}
-
-	if int64(n) > maxSize {
-		return nil, "", fmt.Errorf("file too large")
 	}
 
 	mime := http.DetectContentType(header[:n])
@@ -65,11 +61,34 @@ func ValidateImage(
 		return nil, "", fmt.Errorf("unsupported image type: %s", mime)
 	}
 
-	// Rebuild reader so downstream sees full content
-	validatedReader := io.MultiReader(
-		bytes.NewReader(header[:n]),
-		limited,
-	)
+	validatedReader := io.MultiReader(bytes.NewReader(header[:n]), limited)
 
-	return validatedReader, mime, nil
+	// Wrap with size-checking reader
+	sizeChecker := &sizeLimitedReader{
+		R: validatedReader,
+		N: MaxImageSize,
+	}
+
+	return sizeChecker, mime, nil
+}
+
+type sizeLimitedReader struct {
+	R io.Reader
+	N int64 // remaining bytes
+}
+
+func (s *sizeLimitedReader) Read(p []byte) (int, error) {
+	if s.N <= 0 {
+		return 0, fmt.Errorf("file too large")
+	}
+	if int64(len(p)) > s.N {
+		p = p[:s.N]
+	}
+	n, err := s.R.Read(p)
+	s.N -= int64(n)
+	if s.N <= 0 && err == nil {
+		// If we reached the limit, signal error on next read
+		err = fmt.Errorf("file too large")
+	}
+	return n, err
 }
