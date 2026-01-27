@@ -12,18 +12,20 @@ import (
 	"github.com/Secure-Website-Builder/Backend/internal/models"
 	"github.com/Secure-Website-Builder/Backend/internal/storage"
 	"github.com/Secure-Website-Builder/Backend/internal/utils"
+	"github.com/Secure-Website-Builder/Backend/internal/services/media"
 	"github.com/google/uuid"
 )
 
 type Service struct {
 	q       *models.Queries
 	storage storage.ObjectStorage
+	media   *media.Service
 	db      *sql.DB
 }
 
 // New creates the product service; pass sqlc queries struct and raw *sql.DB
-func New(q *models.Queries, db *sql.DB, storage storage.ObjectStorage) *Service {
-	return &Service{q: q, db: db, storage: storage}
+func New(q *models.Queries, db *sql.DB, storage storage.ObjectStorage, mediaService *media.Service) *Service {
+	return &Service{q: q, db: db, storage: storage, media: mediaService}
 }
 
 func (s *Service) GetFullProduct(ctx context.Context, storeID, productID int64) (*models.ProductFullDetailsDTO, error) {
@@ -396,19 +398,21 @@ func (s *Service) CreateProduct(
 			uuid.NewString(),
 		)
 
-		url, err := s.storage.Upload(ctx, key, image, header.Size, header.Header.Get("Content-Type"))
-
+		url, _, err := s.media.UploadImage(ctx, key, image) 
 		if err == nil {
-			uploadedKey = key
-			err = qtx.SetPrimaryVariantImage(ctx, models.SetPrimaryVariantImageParams{
-				VariantID: finalVariant.VariantID,
-				PrimaryImageUrl: sql.NullString{
-					String: url,
-					Valid:  true,
+		uploadedKey = key
+		err = qtx.SetPrimaryVariantImage(ctx, models.SetPrimaryVariantImageParams{
+			VariantID: finalVariant.VariantID,
+			PrimaryImageUrl: sql.NullString{
+				String: url,
+				Valid:  true,
 				},
 			})
+
 			if err != nil {
+				// Delete uploaded image if DB insert fails
 				_ = s.storage.Delete(ctx, uploadedKey)
+				return nil, nil, fmt.Errorf("failed to set variant image in DB: %w", err)
 			}
 		}
 	}
@@ -565,21 +569,23 @@ func (s *Service) AddVariant(
 			uuid.NewString(),
 		)
 
-		url, err := s.storage.Upload(ctx, key, image, header.Size, header.Header.Get("Content-Type"))
+		url, _, err := s.media.UploadImage(ctx, key, image) 
 		if err == nil {
-			uploadedKey = key
-			err = qtx.SetPrimaryVariantImage(ctx, models.SetPrimaryVariantImageParams{
-				VariantID: finalVariant.VariantID,
-				PrimaryImageUrl: sql.NullString{
-					String: url,
-					Valid:  true,
+		uploadedKey = key
+		err = qtx.SetPrimaryVariantImage(ctx, models.SetPrimaryVariantImageParams{
+			VariantID: finalVariant.VariantID,
+			PrimaryImageUrl: sql.NullString{
+				String: url,
+				Valid:  true,
 				},
 			})
+
 			if err != nil {
+				// Delete uploaded image if DB insert fails
 				_ = s.storage.Delete(ctx, uploadedKey)
+				return nil, fmt.Errorf("failed to set variant image in DB: %w", err)
 			}
 		}
-
 	}
 
 	// 5. Update product stock

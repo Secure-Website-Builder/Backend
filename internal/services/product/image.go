@@ -26,25 +26,18 @@ func (s *Service) UploadVariantImage(
 	if variant.StoreID != storeID || variant.ProductID != productID {
 		return "", fmt.Errorf("not your variant")
 	}
-
+	
 	// Generate S3 key
 	key := fmt.Sprintf(
 		"stores/%d/products/%d/variants/%d/%s",
 		storeID, productID, variantID, uuid.NewString(),
 	)
 
-	// Upload to S3 / MinIO
-	url, err := s.storage.Upload(
-		ctx,
-		key,
-		file,
-		fileHeader.Size,
-		fileHeader.Header.Get("Content-Type"),
-	)
-
+	// Upload image using media service
+	url, _, err := s.media.UploadImage(ctx, key, file)
 	if err != nil {
-		return "", err
-	}
+	return "", fmt.Errorf("failed to upload image: %w", err)
+}
 
 	// Start DB transaction
 	tx, err := s.db.BeginTx(ctx, nil)
