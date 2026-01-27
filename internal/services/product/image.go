@@ -27,8 +27,6 @@ func (s *Service) UploadVariantImage(
 		return "", fmt.Errorf("not your variant")
 	}
 	
-	const maxFileSize = 5 << 20 // 5 MB
-
 	// Generate S3 key
 	key := fmt.Sprintf(
 		"stores/%d/products/%d/variants/%d/%s",
