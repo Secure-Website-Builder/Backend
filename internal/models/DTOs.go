@@ -67,7 +67,7 @@ type CartDTO struct {
 	CartID    int64         `json:"cart_id"`
 	StoreID   int64         `json:"store_id"`
 	Items     []CartItemDTO `json:"items"`
-	Total     float64       `json:"total"`
+	Total     string       `json:"total"`
 	UpdatedAt sql.NullTime  `json:"updated_at"`
 }
 

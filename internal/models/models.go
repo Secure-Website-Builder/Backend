@@ -27,8 +27,9 @@ type AttributeDefinition struct {
 
 type Cart struct {
 	CartID     int64
-	CustomerID sql.NullInt64
 	StoreID    int64
+	SessionID  uuid.UUID
+	CustomerID sql.NullInt64
 	CreatedAt  sql.NullTime
 	UpdatedAt  sql.NullTime
 }
