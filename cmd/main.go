@@ -71,7 +71,7 @@ func main() {
 	mediaService := media.New(storage)
 	categoryService := category.NewService(queries)
 	productService := product.New(queries, db, storage, mediaService)
-	cartService := cart.New(queries)
+	cartService := cart.New(queries, db)
 	storeService := store.New(db, queries, storage)
 	authService := auth.New(queries, cfg.JWTSecret)
 

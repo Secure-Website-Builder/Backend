@@ -3,7 +3,7 @@ package cart
 import (
 	"context"
 	"database/sql"
-	"strconv"
+	"fmt"
 
 	"github.com/Secure-Website-Builder/Backend/internal/models"
 	"github.com/Secure-Website-Builder/Backend/internal/utils"
@@ -12,10 +12,11 @@ import (
 
 type Service struct {
 	q *models.Queries
+	db *sql.DB
 }
 
-func New(q *models.Queries) *Service {
-	return &Service{q: q}
+func New(q *models.Queries, db *sql.DB) *Service {
+	return &Service{q: q, db: db}
 }
 
 func (s *Service) GetCart(
@@ -30,14 +31,12 @@ func (s *Service) GetCart(
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Visitor has no cart yet
 			return &models.CartDTO{
 				StoreID: storeID,
 				Items:   []models.CartItemDTO{},
-				Total:   0,
+				Total:   "0",
 			}, nil
 		}
-		// Real failure
 		return nil, err
 	}
 
@@ -47,14 +46,7 @@ func (s *Service) GetCart(
 	}
 
 	items := make([]models.CartItemDTO, 0, len(itemsRaw))
-	var total float64
-
 	for _, it := range itemsRaw {
-		subtotal, err := strconv.ParseFloat(it.Subtotal, 64)
-		if err != nil {
-			return nil, err
-		}
-
 		items = append(items, models.CartItemDTO{
 			CartItemID: it.CartItemID,
 			VariantID:  it.VariantID,
@@ -66,8 +58,11 @@ func (s *Service) GetCart(
 			Quantity:   it.Quantity,
 			Subtotal:   it.Subtotal,
 		})
+	}
 
-		total += subtotal
+	total, err := s.q.GetCartTotal(ctx, cartRow.CartID)
+	if err != nil {
+		return nil, err
 	}
 
 	return &models.CartDTO{
@@ -77,4 +72,86 @@ func (s *Service) GetCart(
 		Total:     total,
 		UpdatedAt: cartRow.UpdatedAt,
 	}, nil
+}
+
+
+func (s *Service) AddItem(
+	ctx context.Context,
+	storeID int64,
+	sessionID uuid.UUID,
+	variantID int64,
+	qty int32,
+) (err error) {
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	q := models.New(tx)
+
+	// 1. Validate session
+	session, err := q.GetSession(ctx, models.GetSessionParams{
+		SessionID: sessionID,
+		StoreID:   storeID,
+	})
+	if err != nil {
+		return fmt.Errorf("invalid session: %w", err)
+	}
+
+	// 2. Lock or create cart
+	cart, err := q.GetCartForSession(ctx, models.GetCartForSessionParams{
+		StoreID:   storeID,
+		SessionID: sessionID,
+	})
+
+	if err == sql.ErrNoRows {
+		cart, err = q.CreateCart(ctx, models.CreateCartParams{
+			StoreID:    storeID,
+			SessionID:  sessionID,
+			CustomerID: session.CustomerID,
+		})
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	// 3. Validate variant
+	variant, err := q.GetVariantForCart(ctx, models.GetVariantForCartParams{
+		VariantID: variantID,
+		StoreID:   storeID,
+	})
+	if err != nil {
+		return fmt.Errorf("invalid variant: %w", err)
+	}
+
+	if variant.StockQuantity < qty {
+		return fmt.Errorf("insufficient stock for variant %d", variantID)
+	}
+
+	// 4. Upsert item
+	if err = q.UpsertCartItem(ctx, models.UpsertCartItemParams{
+		CartID:    cart.CartID,
+		VariantID: variant.VariantID,
+		Quantity:  qty,
+		UnitPrice: variant.Price,
+	}); err != nil {
+		return err
+	}
+
+	// 5. Touch cart
+	if err = q.TouchCart(ctx, cart.CartID); err != nil {
+		return err
+	}
+
+	// 6. Commit
+	return tx.Commit()
 }
