@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Secure-Website-Builder/Backend/internal/models"
+	"github.com/google/uuid"
 )
 
 func insertVariantAttributes(
@@ -32,7 +33,7 @@ func findOrCreateVariant(
 	productID int64,
 	hash string,
 	inputVariant models.VariantInput,
-) (variant models.ProductVariant, isNew bool, err error) {
+) (variant models.ProductVariant, err error) {
 
 	// Try to find existing variant
 	existingVariant, err := qtx.GetVariantByAttributeHash(ctx, models.GetVariantByAttributeHashParams{
@@ -46,10 +47,10 @@ func findOrCreateVariant(
 			VariantID:     existingVariant.VariantID,
 			StockQuantity: inputVariant.Stock,
 		}); err != nil {
-			return models.ProductVariant{}, false, err
+			return models.ProductVariant{}, err
 		}
 
-		return existingVariant, false, nil
+		return existingVariant, nil
 	}
 
 	// Variant does not exist - create new one
@@ -62,12 +63,20 @@ func findOrCreateVariant(
 		StockQuantity: inputVariant.Stock,
 	})
 	if err != nil {
-		return models.ProductVariant{}, false, err
+		return models.ProductVariant{}, err
 	}
 
 	if err := insertVariantAttributes(ctx, qtx, newVariant.VariantID, inputVariant.Attributes); err != nil {
-		return models.ProductVariant{}, false, err
+		return models.ProductVariant{}, err
 	}
 
-	return newVariant, true, nil
+	return newVariant, nil
+}
+
+func generateImageUploadKey(storeID int64, variantID int64) string {
+	return fmt.Sprintf("stores/%d/variants/%d/%s",
+		storeID,
+		variantID,
+		uuid.NewString(),
+	)
 }
