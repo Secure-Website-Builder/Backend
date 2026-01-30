@@ -6,19 +6,20 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Secure-Website-Builder/Backend/internal/database"
 	"github.com/Secure-Website-Builder/Backend/internal/models"
 	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/Secure-Website-Builder/Backend/internal/utils"
 )
 
 type Service struct {
-	queries   *models.Queries
+	db   *database.DB
 	jwtSecret string
 }
 
-func New(queries *models.Queries, jwtSecret string) *Service {
+func New(db *database.DB, jwtSecret string) *Service {
 	return &Service{
-		queries:   queries,
+		db:       db,
 		jwtSecret: jwtSecret,
 	}
 }
@@ -65,7 +66,7 @@ func (s *Service) Register(
 	switch role {
 
 	case "store_owner":
-		user, err := s.queries.CreateStoreOwner(ctx, models.CreateStoreOwnerParams{
+		user, err := s.db.Queries.CreateStoreOwner(ctx, models.CreateStoreOwnerParams{
 			Name:         name,
 			Email:        email,
 			PasswordHash: hashed,
@@ -82,7 +83,7 @@ func (s *Service) Register(
 			return "", "", errors.New("store_id is required")
 		}
 
-		user, err := s.queries.CreateCustomer(ctx, models.CreateCustomerParams{
+		user, err := s.db.Queries.CreateCustomer(ctx, models.CreateCustomerParams{
 			StoreID:      *storeID,
 			Name:         name,
 			Email:        email,
@@ -124,7 +125,7 @@ func (s *Service) Register(
 		}
 	}
 
-	err = s.queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
+	err = s.db.Queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
 		Token:     refreshToken,
 		UserID:    userID,
 		UserRole:  role,
@@ -154,7 +155,7 @@ func (s *Service) Login(
 	switch role {
 
 	case "store_owner":
-		user, err := s.queries.GetStoreOwnerByEmail(ctx, email)
+		user, err := s.db.Queries.GetStoreOwnerByEmail(ctx, email)
 		if err != nil {
 			return "", "", errors.New("invalid credentials")
 		}
@@ -166,7 +167,7 @@ func (s *Service) Login(
 			return "", "", errors.New("store_id is required")
 		}
 
-		user, err := s.queries.GetCustomerByEmail(ctx, models.GetCustomerByEmailParams{
+		user, err := s.db.Queries.GetCustomerByEmail(ctx, models.GetCustomerByEmailParams{
 			Email:   email,
 			StoreID: *storeID,
 		})
@@ -210,8 +211,8 @@ func (s *Service) Login(
 		}
 	}
 
-	err = s.queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
-		Token:     refreshToken,
+	err = s.db.Queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
+		Token:    refreshToken,
 		UserID:    userID,
 		UserRole:  role,
 		StoreID:   nullableStoreID,
@@ -229,7 +230,7 @@ func (s *Service) AdminLogin(
 	email, password string,
 ) (string, error) {
 
-	admin, err := s.queries.GetAdminByEmail(ctx, email)
+	admin, err := s.db.Queries.GetAdminByEmail(ctx, email)
 	if err != nil {
 		return "", errors.New("invalid credentials")
 	}
@@ -252,7 +253,7 @@ func (s *Service) Refresh(
 	refreshToken string,
 ) (string, string, error) {
 
-	rt, err := s.queries.GetRefreshToken(ctx, refreshToken)
+	rt, err := s.db.Queries.GetRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", "", errors.New("invalid refresh token")
 	}
@@ -262,7 +263,7 @@ func (s *Service) Refresh(
 	}
 
 	// rotate refresh token
-	if err := s.queries.RevokeRefreshToken(ctx, refreshToken); err != nil {
+	if err := s.db.Queries.RevokeRefreshToken(ctx, refreshToken); err != nil {
 		return "", "", err
 	}
 
@@ -271,7 +272,7 @@ func (s *Service) Refresh(
 		return "", "", err
 	}
 
-	if err := s.queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
+	if err := s.db.Queries.CreateRefreshToken(ctx, models.CreateRefreshTokenParams{
 		Token:     newRT,
 		UserID:    rt.UserID,
 		UserRole:  rt.UserRole,
@@ -310,5 +311,5 @@ func (s *Service) Logout(
 		return nil
 	}
 
-	return s.queries.RevokeRefreshToken(ctx, refreshToken)
+	return s.db.Queries.RevokeRefreshToken(ctx, refreshToken)
 }
