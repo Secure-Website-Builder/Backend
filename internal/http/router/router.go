@@ -61,6 +61,7 @@ func SetupRouter(
 		middleware.RequireSameStore(),
 	)
 	cartGroup.GET("", cartHandler.GetCart)
+	cartGroup.POST("/items", cartHandler.AddItem)
 
 	// Store owner dashboard routes
 	dashboard := auth.Group("/dashboard/stores/:store_id")
