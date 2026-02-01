@@ -1,7 +1,11 @@
 package errorx
 
 const (
+	MsgInvalidRequestBody = "invalid request body"
 	MsgInvalidSession     = "invalid session"
+	MsgInvalidStoreID     = "invalid store id"
+	MsgInvalidSessionID   = "invalid session id"
+	MsgMissingSessionID   = "missing session id"
 	MsgInvalidVariant     = "invalid variant"
 	MsgInsufficientStock  = "insufficient stock"
 	MsgCartNotFound       = "cart not found"

@@ -13,7 +13,17 @@ type HTTPError struct {
 
 func Resolve(err error) HTTPError {
 	switch {
-	case errors.Is(err, ErrInvalidSession):
+	case errors.Is(err, ErrInvalidRequestBody):
+		return HTTPError{http.StatusBadRequest, MsgInvalidRequestBody}
+
+	case errors.Is(err, ErrInvalidStoreID):
+		return HTTPError{http.StatusBadRequest, MsgInvalidStoreID}
+
+	case errors.Is(err, ErrMissingSessionID):
+		return HTTPError{http.StatusUnauthorized, MsgMissingSessionID}
+
+	case errors.Is(err, ErrInvalidSessionID),
+		errors.Is(err, ErrInvalidSession):
 		return HTTPError{http.StatusUnauthorized, MsgInvalidSession}
 
 	case errors.Is(err, ErrInvalidVariant):
