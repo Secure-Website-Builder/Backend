@@ -6,6 +6,7 @@ import (
 	"github.com/Secure-Website-Builder/Backend/internal/services/auth"
 	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type AuthHandler struct {
@@ -87,12 +88,21 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	rawSessionID := c.GetHeader("X-Session-ID")
+	var sessionID *uuid.UUID
+	if rawSessionID != "" {
+		if id, err := uuid.Parse(rawSessionID); err == nil {
+			sessionID = &id
+		}
+	}
+
 	accessToken, refreshToken, err := h.service.Login(
 		c.Request.Context(),
 		req.Email,
 		req.Password,
 		req.Role,
 		req.StoreID,
+		sessionID,
 	)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})

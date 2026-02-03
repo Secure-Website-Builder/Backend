@@ -14,6 +14,25 @@ import (
 	"github.com/google/uuid"
 )
 
+const attachCartToCustomer = `-- name: AttachCartToCustomer :exec
+UPDATE cart
+SET customer_id = $1,
+    session_id  = $2,
+    updated_at  = NOW()
+WHERE cart_id = $3
+`
+
+type AttachCartToCustomerParams struct {
+	CustomerID sql.NullInt64
+	SessionID  uuid.UUID
+	CartID     int64
+}
+
+func (q *Queries) AttachCartToCustomer(ctx context.Context, arg AttachCartToCustomerParams) error {
+	_, err := q.db.ExecContext(ctx, attachCartToCustomer, arg.CustomerID, arg.SessionID, arg.CartID)
+	return err
+}
+
 const categoryHasAttribute = `-- name: CategoryHasAttribute :one
 SELECT 1
 FROM category_attribute
@@ -440,6 +459,16 @@ func (q *Queries) DecreaseVariantStock(ctx context.Context, arg DecreaseVariantS
 	return err
 }
 
+const deleteCart = `-- name: DeleteCart :exec
+DELETE FROM cart
+WHERE cart_id = $1
+`
+
+func (q *Queries) DeleteCart(ctx context.Context, cartID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCart, cartID)
+	return err
+}
+
 const deleteStore = `-- name: DeleteStore :exec
 DELETE FROM store
 WHERE store_id = $1
@@ -469,6 +498,32 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (GetAdminBy
 	return i, err
 }
 
+const getCartByCustomerForUpdate = `-- name: GetCartByCustomerForUpdate :one
+SELECT cart_id, store_id, session_id, customer_id, created_at, updated_at
+FROM cart
+WHERE store_id = $1 AND customer_id = $2
+FOR UPDATE
+`
+
+type GetCartByCustomerForUpdateParams struct {
+	StoreID    int64
+	CustomerID sql.NullInt64
+}
+
+func (q *Queries) GetCartByCustomerForUpdate(ctx context.Context, arg GetCartByCustomerForUpdateParams) (Cart, error) {
+	row := q.db.QueryRowContext(ctx, getCartByCustomerForUpdate, arg.StoreID, arg.CustomerID)
+	var i Cart
+	err := row.Scan(
+		&i.CartID,
+		&i.StoreID,
+		&i.SessionID,
+		&i.CustomerID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getCartBySession = `-- name: GetCartBySession :one
 SELECT
   c.cart_id,
@@ -495,6 +550,32 @@ func (q *Queries) GetCartBySession(ctx context.Context, arg GetCartBySessionPara
 	row := q.db.QueryRowContext(ctx, getCartBySession, arg.SessionID, arg.StoreID)
 	var i GetCartBySessionRow
 	err := row.Scan(&i.CartID, &i.StoreID, &i.UpdatedAt)
+	return i, err
+}
+
+const getCartBySessionForUpdate = `-- name: GetCartBySessionForUpdate :one
+SELECT cart_id, store_id, session_id, customer_id, created_at, updated_at
+FROM cart
+WHERE store_id = $1 AND session_id = $2
+FOR UPDATE
+`
+
+type GetCartBySessionForUpdateParams struct {
+	StoreID   int64
+	SessionID uuid.UUID
+}
+
+func (q *Queries) GetCartBySessionForUpdate(ctx context.Context, arg GetCartBySessionForUpdateParams) (Cart, error) {
+	row := q.db.QueryRowContext(ctx, getCartBySessionForUpdate, arg.StoreID, arg.SessionID)
+	var i Cart
+	err := row.Scan(
+		&i.CartID,
+		&i.StoreID,
+		&i.SessionID,
+		&i.CustomerID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
@@ -1434,6 +1515,51 @@ func (q *Queries) ListCategoryAttributes(ctx context.Context, categoryID int64) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const mergeCartItems = `-- name: MergeCartItems :exec
+WITH updated AS (
+  UPDATE cart_item dst
+  SET quantity = dst.quantity + src.quantity,
+      updated_at = NOW()
+  FROM cart_item src
+  WHERE src.cart_id = $2
+    AND dst.cart_id = $1
+    AND src.variant_id = dst.variant_id
+  RETURNING src.cart_item_id
+)
+INSERT INTO cart_item (
+  cart_id,
+  variant_id,
+  quantity,
+  unit_price,
+  created_at,
+  updated_at
+)
+SELECT
+  $1,
+  src.variant_id,
+  src.quantity,
+  src.unit_price,
+  NOW(),
+  NOW()
+FROM cart_item src
+WHERE src.cart_id = $2
+  AND NOT EXISTS (
+    SELECT 1
+    FROM updated u
+    WHERE u.cart_item_id = src.cart_item_id
+  )
+`
+
+type MergeCartItemsParams struct {
+	ToCartID   int64
+	FromCartID int64
+}
+
+func (q *Queries) MergeCartItems(ctx context.Context, arg MergeCartItemsParams) error {
+	_, err := q.db.ExecContext(ctx, mergeCartItems, arg.ToCartID, arg.FromCartID)
+	return err
 }
 
 const resolveAttributeIDByName = `-- name: ResolveAttributeIDByName :one

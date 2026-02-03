@@ -210,6 +210,29 @@ FROM cart
 WHERE store_id = $1 AND session_id = $2
 FOR UPDATE;
 
+-- name: GetCartBySessionForUpdate :one
+SELECT *
+FROM cart
+WHERE store_id = $1 AND session_id = $2
+FOR UPDATE;
+
+-- name: GetCartByCustomerForUpdate :one
+SELECT *
+FROM cart
+WHERE store_id = $1 AND customer_id = $2
+FOR UPDATE;
+
+-- name: AttachCartToCustomer :exec
+UPDATE cart
+SET customer_id = $1,
+    session_id  = $2,
+    updated_at  = NOW()
+WHERE cart_id = $3;
+
+-- name: DeleteCart :exec
+DELETE FROM cart
+WHERE cart_id = $1;
+
 -- name: CreateCart :one
 INSERT INTO cart (store_id, session_id, customer_id)
 VALUES ($1, $2, $3)
@@ -439,3 +462,37 @@ WHERE store_id = $1;
 SELECT *
 FROM store
 WHERE store_id = $1;
+
+-- name: MergeCartItems :exec
+WITH updated AS (
+  UPDATE cart_item dst
+  SET quantity = dst.quantity + src.quantity,
+      updated_at = NOW()
+  FROM cart_item src
+  WHERE src.cart_id = @from_cart_id
+    AND dst.cart_id = @to_cart_id
+    AND src.variant_id = dst.variant_id
+  RETURNING src.cart_item_id
+)
+INSERT INTO cart_item (
+  cart_id,
+  variant_id,
+  quantity,
+  unit_price,
+  created_at,
+  updated_at
+)
+SELECT
+  @to_cart_id,
+  src.variant_id,
+  src.quantity,
+  src.unit_price,
+  NOW(),
+  NOW()
+FROM cart_item src
+WHERE src.cart_id = @from_cart_id
+  AND NOT EXISTS (
+    SELECT 1
+    FROM updated u
+    WHERE u.cart_item_id = src.cart_item_id
+  );

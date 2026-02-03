@@ -10,6 +10,7 @@ import (
 	"github.com/Secure-Website-Builder/Backend/internal/models"
 	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/Secure-Website-Builder/Backend/internal/utils"
+	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -145,6 +146,7 @@ func (s *Service) Login(
 	ctx context.Context,
 	email, password, role string,
 	storeID *int64,
+	sessionID *uuid.UUID,
 ) (accessToken, refreshToken string, err error) {
 
 	var (
@@ -176,7 +178,18 @@ func (s *Service) Login(
 		}
 		userID = user.CustomerID
 		hashed = user.PasswordHash
-
+		defer func() {
+			if err == nil {
+				if sessionID != nil {
+					_ = s.mergeCustomerCartOnLogin(
+						ctx,
+						*storeID,
+						userID,
+						*sessionID,
+					)
+				}
+			}
+		}()
 	default:
 		return "", "", errors.New("invalid role")
 	}
