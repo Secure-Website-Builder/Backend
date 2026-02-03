@@ -146,7 +146,8 @@ CREATE TABLE cart (
   created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-  UNIQUE (store_id, session_id)
+  UNIQUE (store_id, session_id),
+  UNIQUE (store_id, customer_id)
 );
 
 CREATE TABLE cart_item (
