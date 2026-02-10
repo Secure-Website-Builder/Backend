@@ -64,9 +64,9 @@ func (s *Service) UploadVariantImage(
 	})
 
 	if err != nil {
-		// TODO: Later we can use outbox pattern to handler the failure of Deleting image 
-		// right now we assume that delete always succeeds
-		s.storage.Delete(ctx, key)
+		if delErr := s.storage.Delete(ctx, key); delErr != nil {
+			return "", fmt.Errorf("database error: %w (failed to cleanup image: %w)", err, delErr)
+		}
 		return "", err
 	}
 
