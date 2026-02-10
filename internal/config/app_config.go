@@ -25,6 +25,7 @@ func LoadAppConfig(path string) (*AppConfig, error) {
 		return nil, fmt.Errorf("config path not allowed")
 	}
 
+	// #nosec G304 -- This file path is fixed and not influenced by user input
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
