@@ -286,6 +286,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+// #nosec G101 - This query does not contain any hardcoded credentials or secrets.
 const createRefreshToken = `-- name: CreateRefreshToken :exec
 INSERT INTO refresh_token (token, user_id, user_role, store_id, expires_at)
 VALUES ($1, $2, $3, $4, $5)
@@ -1035,6 +1036,7 @@ func (q *Queries) GetProductVariants(ctx context.Context, productID int64) ([]Ge
 	return items, nil
 }
 
+// #nosec G101 - This query does not contain any hardcoded credentials or secrets.
 const getRefreshToken = `-- name: GetRefreshToken :one
 SELECT refresh_token_id, token, user_id, user_role, store_id, expires_at, revoked, created_at
 FROM refresh_token
@@ -1597,6 +1599,7 @@ func (q *Queries) ResolveCategoryIDByName(ctx context.Context, arg ResolveCatego
 	return category_id, err
 }
 
+// #nosec G101 - This query does not contain any hardcoded credentials or secrets.
 const revokeRefreshToken = `-- name: RevokeRefreshToken :exec
 UPDATE refresh_token
 SET revoked = TRUE
