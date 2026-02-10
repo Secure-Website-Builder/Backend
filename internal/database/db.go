@@ -36,9 +36,14 @@ func (d *DB) RunInTx(ctx context.Context, fn func(q *models.Queries) error) erro
 	qtx := d.Queries.WithTx(tx)
 
 	if err := fn(qtx); err != nil {
-		tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return rbErr
+		}
 		return err
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
