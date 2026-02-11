@@ -2,7 +2,7 @@ package utils
 
 import (
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha1" // #nosec G505 -- We need SHA-1 for HIBP API, not for security purposes
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
@@ -149,6 +149,7 @@ func hasSymbol(s string) bool {
 // HIBP Check 
 
 func IsPasswordPwned(password string) (bool, error) {
+	// #nosec G401 -- We are intentionally using SHA-1 for the k-anonymity API, not for security purposes
 	hash := sha1.Sum([]byte(password))
 	hashHex := strings.ToUpper(hex.EncodeToString(hash[:]))
 
