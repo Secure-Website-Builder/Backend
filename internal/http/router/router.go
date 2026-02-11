@@ -31,6 +31,7 @@ func SetupRouter(
 
 	auth := r.Group("/")
 	auth.Use(middleware.JWTAuth(jwtSecret))
+	auth.Use(middleware.CSRFMiddleware())
 
 	// Create store (store owner only)
 	stores := auth.Group("/stores")
