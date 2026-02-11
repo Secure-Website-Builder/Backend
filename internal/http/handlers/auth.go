@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/Secure-Website-Builder/Backend/internal/http/middleware"
 	"github.com/Secure-Website-Builder/Backend/internal/services/auth"
 	"github.com/Secure-Website-Builder/Backend/internal/types"
 	"github.com/gin-gonic/gin"
@@ -32,10 +33,6 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"role" binding:"required,oneof=store_owner customer"`
 	StoreID  *int64 `json:"store_id"`
-}
-
-type AuthResponse struct {
-	Token string `json:"token"`
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -69,16 +66,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.SetCookie(
-		"refresh_token",
-		refreshToken,
-		7*24*60*60,
-		"/",
-		"",
-		true,
-		true,
-	)
-	c.JSON(http.StatusOK, AuthResponse{Token: accessToken})
+	csrfToken := middleware.GenerateCSRFToken()
+	setAuthCookies(c, accessToken, refreshToken, csrfToken)
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
@@ -109,17 +99,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie(
-		"refresh_token",
-		refreshToken,
-		7*24*60*60,
-		"/",
-		"",
-		true,
-		true,
-	)
-
-	c.JSON(http.StatusOK, AuthResponse{Token: accessToken})
+	csrfToken := middleware.GenerateCSRFToken()
+	setAuthCookies(c, accessToken, refreshToken, csrfToken)
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 type AdminLoginRequest struct {
@@ -154,7 +136,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	access, newRefresh, err := h.service.Refresh(
+	accessToken, newRefresh, err := h.service.Refresh(
 		c.Request.Context(),
 		refreshToken,
 	)
@@ -163,19 +145,9 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie(
-		"refresh_token",
-		newRefresh,
-		7*24*60*60,
-		"/",
-		"",
-		true,
-		true,
-	)
-
-	c.JSON(http.StatusOK, gin.H{
-		"access_token": access,
-	})
+	csrfToken := middleware.GenerateCSRFToken()
+	setAuthCookies(c, accessToken, newRefresh, csrfToken)
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
