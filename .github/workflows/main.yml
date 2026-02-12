@@ -30,7 +30,7 @@ jobs:
         continue-on-error: true
         id: gosec
         run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@v2.20.0
+          go install github.com/securego/gosec/v2/cmd/gosec@v2.22.10
           # Run gosec for JSON output
           gosec -fmt=json -out=sarif/gosec.json ./... || true
           # Run gosec for SARIF output
